@@ -4,6 +4,7 @@ import { DECK_SHELF_CARD_CLASS, DeckShelfRow } from "@/components/play/DeckShelf
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { SavedDeck } from "@/stores/useDeckStore";
+import { useArcanaSpanish } from "@/hooks/useArcanaSpanish";
 interface OwnedDeckShelfProps {
   decks: SavedDeck[];
   lastPlayedDeckId: string | null;
@@ -24,30 +25,31 @@ export function OwnedDeckShelf({
   onPlayDeck,
   onViewPreset,
 }: OwnedDeckShelfProps) {
+  const spanish = useArcanaSpanish();
   if (decks.length === 0) {
     return (
       <div className="flex min-h-36 flex-col items-center justify-center rounded-xl border border-dashed border-border/80 bg-muted/30 px-6 py-8 text-center">
         <LibraryBig className="mb-3 h-7 w-7 text-secondary" />
-        <p className="font-medium">Your first deck is waiting to be brewed.</p>
+        <p className="font-medium">{spanish ? "Tu primer mazo está esperando a que lo construyas." : "Your first deck is waiting to be brewed."}</p>
         <p className="mt-1 text-ui-body text-muted-foreground">
-          Build from scratch, import a decklist, or start with a preset below.
+          {spanish ? "Crea un mazo, importa una lista o elige uno de los mazos iniciales." : "Build from scratch, import a decklist, or start with a preset below."}
         </p>
         <Button size="sm" variant="primary" className="mt-4" onClick={onAddDeck}>
           <Plus className="h-4 w-4" />
-          Build / Import
+          {spanish ? "Crear / Importar" : "Build / Import"}
         </Button>
       </div>
     );
   }
   return (
-    <DeckShelfRow label={`My decks`}>
+    <DeckShelfRow label={spanish ? "Mis mazos" : "My decks"}>
       {decks.map((deck) => {
         const presetKey = presetKeyByDeckId[deck.id];
         return (
           <div key={deck.id} className={cn(DECK_SHELF_CARD_CLASS, "relative")}>
             {deck.id === lastPlayedDeckId && (
               <span className="absolute right-1.5 top-1.5 z-20 rounded bg-background/90 px-1.5 py-0.5 text-ui-meta font-semibold uppercase tracking-wide text-primary shadow-sm backdrop-blur-sm">
-                Last played
+                {spanish ? "Última partida" : "Last played"}
               </span>
             )}
             <DeckGridCard
@@ -55,7 +57,7 @@ export function OwnedDeckShelf({
               onOpen={() => onOpenDeck(deck)}
               onPlay={() => onPlayDeck(deck)}
               onViewInHub={presetKey ? () => onViewPreset(presetKey) : undefined}
-              badge={presetKey ? "Preset copy" : undefined}
+              badge={presetKey ? (spanish ? "Copia de mazo inicial" : "Preset copy") : undefined}
               playing={pendingDeckId === deck.id}
               playDisabled={pendingDeckId !== null}
               readOnly
