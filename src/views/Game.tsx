@@ -1144,7 +1144,7 @@ export default function Game({ exitTo }: GameProps = {}) {
     }
     respondHandAction(action);
   };
-  const activeFlash = useFlashQueue(flashDurationMs);
+  const { activeFlash, continueFlash } = useFlashQueue(flashDurationMs);
   const [priorityHighlightPlayerId, setPriorityHighlightPlayerId] = useState<string | null>(null);
   useEffect(() => {
     const next = gameView?.priorityPlayerId ?? null;
@@ -2516,7 +2516,9 @@ export default function Game({ exitTo }: GameProps = {}) {
         />
       )}
       <LandscapeGate />
-      {activeFlashCard && <ArcanaSpellAnnouncement card={activeFlashCard} />}
+      {activeFlash?.kind === "card" && (
+        <ArcanaSpellAnnouncement flash={activeFlash} onContinue={continueFlash} />
+      )}
       <DevViewportFrame>
         <GameBoard
           boardSceneRef={boardSceneRef}
