@@ -48,7 +48,7 @@ try {
 
   for (const name of ["forgeharness.js", "forgeharness.js.wasm"]) {
     const source = join(unpacked, name);
-    if (!existsSync(source) || statSync(source).size < 1_000_000) {
+    if (!existsSync(source) || statSync(source).size < (name.endsWith(".wasm") ? 1_000_000 : 10_000)) {
       throw new Error(`The Forge Web Image is missing or incomplete: ${name}`);
     }
     if (name.endsWith(".wasm")) {
