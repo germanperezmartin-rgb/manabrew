@@ -1,6 +1,9 @@
 name: Arcana Arena - Compilar juego de escritorio
 
 on:
+  push:
+    branches:
+      - arcana/solo-escritorio
   workflow_dispatch:
     inputs:
       plataforma:
@@ -18,7 +21,7 @@ permissions:
 jobs:
   windows:
     name: Arcana Arena para Windows
-    if: inputs.plataforma == 'Windows'
+    if: github.event_name == 'push' || inputs.plataforma == 'Windows'
     runs-on: windows-latest
     timeout-minutes: 120
     steps:
@@ -65,7 +68,7 @@ jobs:
         env:
           SELF_HOSTED_NODE_GRAAL_SMOKE: "1"
       - name: Generar instalador Windows sin firma
-        run: yarn tauri build --features forge-room --config src-tauri/tauri.dev.conf.json
+        run: yarn tauri build --features forge-room --config src-tauri/arcana.conf.json
       - uses: actions/upload-artifact@v4
         with:
           name: arcana-windows-instalador-sin-firma
@@ -77,7 +80,7 @@ jobs:
 
   macos:
     name: Arcana Arena para macOS
-    if: inputs.plataforma == 'macOS'
+    if: github.event_name == 'push' || inputs.plataforma == 'macOS'
     runs-on: macos-latest
     timeout-minutes: 120
     steps:
@@ -122,7 +125,7 @@ jobs:
         env:
           SELF_HOSTED_NODE_GRAAL_SMOKE: "1"
       - name: Generar instalador macOS sin firma
-        run: yarn tauri build --features forge-room --config src-tauri/tauri.dev.conf.json
+        run: yarn tauri build --features forge-room --config src-tauri/arcana.conf.json
       - uses: actions/upload-artifact@v4
         with:
           name: arcana-macos-instalador-sin-firma
