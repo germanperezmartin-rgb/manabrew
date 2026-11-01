@@ -1,5 +1,6 @@
 #![allow(clippy::too_many_arguments)]
 
+mod arcana_catalog;
 mod asset_server;
 mod card_db;
 mod commands;
@@ -73,7 +74,7 @@ pub fn run() {
             // mobile windows are always fullscreen.
             #[cfg(desktop)]
             let builder = builder
-                .title("Manabrew")
+                .title("Arcana Arena")
                 .inner_size(1400.0, 900.0)
                 .resizable(true)
                 .maximized(true);
@@ -85,6 +86,11 @@ pub fn run() {
         .manage(forge_room::ForgeRoomHost::new())
         .manage(local_relay::LocalRelayHost::new())
         .invoke_handler(tauri::generate_handler![
+            arcana_catalog::arcana_import_scryfall,
+            arcana_catalog::arcana_catalog_stats,
+            arcana_catalog::arcana_catalog_search,
+            arcana_catalog::arcana_catalog_lookup,
+            arcana_catalog::arcana_catalog_printings,
             commands::is_card_supported,
             commands::card_roles,
             forge_room::forge_room_available,
