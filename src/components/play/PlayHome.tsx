@@ -18,6 +18,7 @@ import { relayUsername } from "@/lib/relayUsername";
 import { usePreferencesStore } from "@/stores/usePreferencesStore";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useServerStore } from "@/stores/useServerStore";
+import { useArcanaSpanish } from "@/hooks/useArcanaSpanish";
 const MODES = [
   {
     to: ROUTES.PLAY_OFFLINE_CONSTRUCTED,
@@ -41,6 +42,14 @@ const MODES = [
 export function PlayHome() {
   const { quickPlay, quickPlayPreset, quickPlayCommunity, pendingDeckId, playersDialog } =
     useQuickPlay();
+  const spanish = useArcanaSpanish();
+  const modes = spanish
+    ? MODES.map((mode) =>
+        mode.to === ROUTES.LOBBY
+          ? { ...mode, label: "Multijugador", desc: "Únete a una mesa o crea una partida para tu grupo." }
+          : { ...mode, label: "Un jugador", desc: "Elige tus mazos y enfréntate a la IA a tu propio ritmo." },
+      )
+    : MODES;
   const shortScreen = useIsShortScreen();
   const isTouch = useIsTouch();
   const shortTouch = shortScreen && isTouch;
@@ -61,7 +70,9 @@ export function PlayHome() {
   const openTables = rooms.filter((room) => room.status === "Lobby").length;
   const lobbyTeaser =
     connected && (openTables > 0 || players.length > 0)
-      ? `${openTables} ${openTables === 1 ? "table" : "tables"} open · ${players.length} online`
+      ? spanish
+        ? `${openTables} ${openTables === 1 ? "mesa abierta" : "mesas abiertas"} · ${players.length} conectados`
+        : `${openTables} ${openTables === 1 ? "table" : "tables"} open · ${players.length} online`
       : null;
   const communityEnabled = isFeatureEnabled("deckHub");
   useEffect(() => {
@@ -104,7 +115,7 @@ export function PlayHome() {
                 shortTouch && "text-2xl sm:text-2xl",
               )}
             >
-              Ready to play?
+              {spanish ? "¿Preparado para jugar?" : "Ready to play?"}
             </h1>
             <p
               className={cn(
@@ -112,7 +123,9 @@ export function PlayHome() {
                 shortTouch && "mt-1 text-ui-body",
               )}
             >
-              Start a match your way, or open a deck from your collection.
+              {spanish
+                ? "Empieza una partida a tu manera o elige un mazo de tu colección."
+                : "Start a match your way, or open a deck from your collection."}
             </p>
           </header>
 
@@ -130,8 +143,8 @@ export function PlayHome() {
               resumePending && "hidden",
             )}
           >
-            <section aria-label={`Play modes`} className="grid gap-4 md:grid-cols-2">
-              {MODES.map(({ to, label, desc, icon, image, imageClassName, tone }) => (
+            <section aria-label={spanish ? "Modos de juego" : "Play modes"} className="grid gap-4 md:grid-cols-2">
+              {modes.map(({ to, label, desc, icon, image, imageClassName, tone }) => (
                 <FeatureTile
                   key={to}
                   to={to}
@@ -178,8 +191,8 @@ export function PlayHome() {
             >
               <FeatureTile
                 to={ROUTES.HUB}
-                label={`Explore community decks`}
-                desc="Browse complete decklists, discover popular builds, and save a version to your collection."
+                label={spanish ? "Explorar mazos de la comunidad" : "Explore community decks"}
+                desc={spanish ? "Descubre mazos, examina sus cartas y guarda tus favoritos." : "Browse complete decklists, discover popular builds, and save a version to your collection."}
                 icon={LibraryBig}
                 tone="community"
                 size="sm"
