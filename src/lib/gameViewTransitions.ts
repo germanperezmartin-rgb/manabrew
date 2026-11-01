@@ -4,7 +4,7 @@ import type { ZoneKind } from "@/protocol/game";
 import type { ClientCardDto, ClientGameView } from "@/stores/gameStore.types";
 
 export type GameViewTransition =
-  | { kind: "cardPlay"; card: ClientCardDto | null }
+  | { kind: "cardPlay"; card: ClientCardDto | null; effectText?: string }
   | { kind: "turnStart"; playerId: string }
   | {
       kind:
@@ -90,7 +90,11 @@ export function gameViewTransitions(
     }
     const before = previousStack.get(item.id);
     if (before && !before.isCasting) continue;
-    transitions.push({ kind: "cardPlay", card: item.sourceCard ? stackObjectToCard(item) : null });
+    transitions.push({
+      kind: "cardPlay",
+      card: item.sourceCard || item.identity ? stackObjectToCard(item) : null,
+      effectText: item.sourceAbilityText?.trim() || undefined,
+    });
   }
 
   const nextStackIds = new Set(next.stack.map((item) => item.id));
@@ -169,7 +173,17 @@ export function gameViewTransitions(
 
 export function flashItemOf(transition: GameViewTransition): FlashItem | null {
   if (transition.kind === "cardPlay") {
-    return transition.card ? { kind: "card", card: transition.card } : null;
+    if (!transition.card) return null;
+    return {
+      kind: "card",
+      card: transition.card,
+      category: transition.card.types.includes("Land")
+        ? "land"
+        : transition.effectText
+          ? "ability"
+          : "spell",
+      effectText: transition.effectText,
+    };
   }
   if (transition.kind === "turnStart") return { kind: "turn", playerId: transition.playerId };
   return null;
