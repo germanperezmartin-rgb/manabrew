@@ -301,7 +301,7 @@ export const usePreferencesStore = create<PreferencesState>()(
         return {
           ...CARD_VIEW_DEFAULTS,
           personalThemeName: null,
-          appLanguage: "system",
+          appLanguage: "es",
           setAppLanguage: (appLanguage) => set({ appLanguage }),
 
           flashDurationMs: 1000,

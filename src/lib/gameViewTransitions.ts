@@ -4,7 +4,12 @@ import type { ZoneKind } from "@/protocol/game";
 import type { ClientCardDto, ClientGameView } from "@/stores/gameStore.types";
 
 export type GameViewTransition =
-  | { kind: "cardPlay"; card: ClientCardDto | null }
+  | {
+      kind: "cardPlay";
+      card: ClientCardDto | null;
+      category: "spell" | "ability" | "land";
+      effectText?: string;
+    }
   | { kind: "turnStart"; playerId: string }
   | {
       kind:
@@ -81,16 +86,19 @@ export function gameViewTransitions(
 
   const previousStack = new Map(previous.stack.map((item) => [item.id, item]));
   for (const item of next.stack) {
-    if (
-      item.isCasting ||
-      nextLocations.get(item.sourceId) !== "stack" ||
-      previousLocations.get(item.sourceId) === "battlefield"
-    ) {
+    const sourceOnBattlefield = previousLocations.get(item.sourceId) === "battlefield";
+    const isAbility = sourceOnBattlefield || !!item.sourceAbilityText?.trim();
+    if (item.isCasting || (!isAbility && nextLocations.get(item.sourceId) !== "stack")) {
       continue;
     }
     const before = previousStack.get(item.id);
     if (before && !before.isCasting) continue;
-    transitions.push({ kind: "cardPlay", card: item.sourceCard ? stackObjectToCard(item) : null });
+    transitions.push({
+      kind: "cardPlay",
+      card: item.sourceCard || item.identity ? stackObjectToCard(item) : null,
+      category: isAbility ? "ability" : "spell",
+      effectText: isAbility ? item.sourceAbilityText?.trim() || item.text.trim() : undefined,
+    });
   }
 
   const nextStackIds = new Set(next.stack.map((item) => item.id));
@@ -117,7 +125,7 @@ export function gameViewTransitions(
     } else if (card.identity.isToken && !previousLocations.has(card.id)) {
       transitions.push({ kind: "tokenCreate" });
     } else if (card.types.includes("Land") && landPlayed(card.controllerId)) {
-      transitions.push({ kind: "cardPlay", card });
+      transitions.push({ kind: "cardPlay", card, category: "land" });
     }
     if (card.attachedTo && card.attachedTo !== before?.attachedTo) {
       transitions.push({ kind: "cardAttach" });
@@ -169,7 +177,13 @@ export function gameViewTransitions(
 
 export function flashItemOf(transition: GameViewTransition): FlashItem | null {
   if (transition.kind === "cardPlay") {
-    return transition.card ? { kind: "card", card: transition.card } : null;
+    if (!transition.card) return null;
+    return {
+      kind: "card",
+      card: transition.card,
+      category: transition.category,
+      effectText: transition.effectText,
+    };
   }
   if (transition.kind === "turnStart") return { kind: "turn", playerId: transition.playerId };
   return null;

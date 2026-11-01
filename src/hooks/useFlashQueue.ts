@@ -100,12 +100,14 @@ export function useFlashQueue(flashDurationMs: number) {
       }
       return;
     }
+    if (activeFlash.kind === "card" && flashDurationMs < 0) return;
+    const duration = flashDurationMs < 0 ? 1000 : flashDurationMs;
     const timer = setTimeout(() => {
       setActiveFlash(null);
-    }, flashDurationMs);
+    }, duration);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeFlash, flashDurationMs]);
 
-  return activeFlash;
+  return { activeFlash, continueFlash: () => setActiveFlash(null) };
 }
