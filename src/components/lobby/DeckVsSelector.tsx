@@ -9,6 +9,7 @@ import { PlaytestPlayersDialog } from "@/components/lobby/PlaytestPlayersDialog"
 import { TablePickerDialog } from "@/components/lobby/TablePickerDialog";
 import { DeckSelectionCard } from "./DeckSelectionCard";
 import { useIsShortScreen, useIsTouch } from "@/hooks/useBreakpoints";
+import { useArcanaSpanish } from "@/hooks/useArcanaSpanish";
 import { cn, pickRandom, pickRandomDistinct } from "@/lib/utils";
 import { toast } from "sonner";
 import { ROUTES } from "@/lib/constants";
@@ -62,6 +63,7 @@ export function DeckVsSelector({
   leadingControl,
   onStart,
 }: DeckVsSelectorProps) {
+  const spanish = useArcanaSpanish();
   const denseDecks = useIsShortScreen();
   const isTouch = useIsTouch();
   const shortTouch = isTouch;
@@ -490,8 +492,8 @@ export function DeckVsSelector({
       <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
       <input
         type="search"
-        aria-label="Filter decks"
-        placeholder={shortTouch ? "Search decks…" : "Filter decks…"}
+        aria-label={spanish ? "Buscar mazos" : "Filter decks"}
+        placeholder={spanish ? "Buscar mazos…" : shortTouch ? "Search decks…" : "Filter decks…"}
         value={deckSearch}
         onChange={(event) => setDeckSearch(event.target.value)}
         className="min-h-9 w-full rounded-md border bg-background pl-9 pr-3 text-ui-input focus:outline-none focus:ring-1 focus:ring-primary touch:min-h-11 touch:min-w-11"
@@ -509,12 +511,12 @@ export function DeckVsSelector({
         <div className="flex shrink-0 items-center gap-2 border-b bg-muted/5 px-4 py-1.5">
           {leadingControl}
           <AppSelect
-            aria-label="Filter decks by format"
+            aria-label={spanish ? "Filtrar mazos por formato" : "Filter decks by format"}
             value={selectedFormat ?? ""}
             onValueChange={(value) => changeFormat(value || null)}
             className="min-h-11 max-w-44 shrink-0 text-ui-label font-medium"
           >
-            <AppSelectOption value="">All formats</AppSelectOption>
+            <AppSelectOption value="">{spanish ? "Todos los formatos" : "All formats"}</AppSelectOption>
             {GAME_FORMATS.map((format) => (
               <AppSelectOption key={format.id} value={format.id}>
                 <FormatBadge formatId={format.id} />
@@ -532,7 +534,7 @@ export function DeckVsSelector({
               aria-label="Filter decks by format"
               className="-mx-1 flex min-w-0 flex-1 gap-1.5 overflow-x-auto px-1 py-1 pr-6 no-scrollbar touch-scroll-fade"
             >
-              {[{ id: null, name: "All" }, ...GAME_FORMATS].map((format) => (
+              {[{ id: null, name: spanish ? "Todos" : "All" }, ...GAME_FORMATS].map((format) => (
                 <button
                   key={format.id ?? "all"}
                   type="button"
@@ -555,13 +557,13 @@ export function DeckVsSelector({
             >
               {pickingSide === "player"
                 ? isReady
-                  ? "Choose your deck or fight"
-                  : "Choose your deck"
+                  ? (spanish ? "Elige tu mazo o empieza a jugar" : "Choose your deck or fight")
+                  : (spanish ? "Elige tu mazo" : "Choose your deck")
                 : pickingSide === "opponent"
                   ? isReady
-                    ? "Choose the AI deck or fight"
-                    : "Choose the AI deck"
-                  : "Matchup ready"}
+                    ? (spanish ? "Elige el mazo rival o empieza a jugar" : "Choose the AI deck or fight")
+                    : (spanish ? "Elige el mazo rival" : "Choose the AI deck")
+                  : (spanish ? "Duelo preparado" : "Matchup ready")}
             </p>
           </div>
           <div className="shrink-0 px-4 pb-2 pt-3 sm:px-6 lg:px-8">{searchControl}</div>
@@ -576,16 +578,16 @@ export function DeckVsSelector({
       >
         <div>
           <p className="text-ui-meta uppercase tracking-wider text-muted-foreground font-semibold pt-2 pb-1">
-            Your Decks
+            {spanish ? "Tus mazos" : "Your Decks"}
           </p>
           {filteredUserDecks.length === 0 ? (
             <p className="text-ui-meta text-muted-foreground italic py-2">
-              No decks yet — build one in{""}
+              {spanish ? "Aún no tienes mazos. Crea uno en " : "No decks yet — build one in"}{""}
               <Link
                 to={ROUTES.DECK_EDITOR}
                 className="touch:inline-flex touch:min-h-11 touch:items-center text-primary underline-offset-2 hover:underline not-italic"
               >
-                My Decks
+                {spanish ? "Mis mazos" : "My Decks"}
               </Link>
               .
             </p>
@@ -645,7 +647,7 @@ export function DeckVsSelector({
                 <div className="flex flex-wrap items-center gap-2 py-2 text-ui-meta text-destructive">
                   <span className="min-w-0 break-words">{hubDecks.error}</span>
                   <Button variant="outline" size="sm" onClick={hubDecks.retry}>
-                    Retry
+                    {spanish ? "Reintentar" : "Retry"}
                   </Button>
                 </div>
               ) : hubDecks.loading && hubDeckEntries.length === 0 ? (
@@ -667,7 +669,7 @@ export function DeckVsSelector({
                 </div>
               ) : hubDeckEntries.length === 0 ? (
                 <p className="py-2 text-ui-meta italic text-muted-foreground">
-                  No Community decks match this format and search.
+                  {spanish ? "No hay mazos de la comunidad que coincidan con la búsqueda." : "No Community decks match this format and search."}
                 </p>
               ) : (
                 <div
@@ -722,11 +724,11 @@ export function DeckVsSelector({
 
         <div>
           <p className="text-ui-meta uppercase tracking-wider text-muted-foreground font-semibold pb-1">
-            Starter Decks
+            {spanish ? "Mazos iniciales" : "Starter Decks"}
           </p>
           {filteredDecks.length === 0 ? (
             <p className="text-ui-meta text-muted-foreground italic py-2">
-              No starter decks for this format.
+              {spanish ? "No hay mazos iniciales para este formato." : "No starter decks for this format."}
             </p>
           ) : (
             <div
@@ -767,7 +769,7 @@ export function DeckVsSelector({
       >
         <div className="grid min-w-0 grid-cols-1 min-[480px]:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-1.5 sm:flex sm:gap-2">
           <DeckSlot
-            label={`YOU`}
+            label={spanish ? "TÚ" : "YOU"}
             icon={<User className="h-3 w-3" />}
             deck={playerDeck}
             sideColor="var(--player-colors-self)"
@@ -814,7 +816,7 @@ export function DeckVsSelector({
                     handleRandomOpponent();
                   }}
                   className="inline-flex w-8 shrink-0 items-center justify-center gap-0.5 rounded-r-md text-ui-label text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground touch:w-11 touch:min-h-11 touch:min-w-11 whitespace-normal"
-                  title="Random AI deck"
+                  title={spanish ? "Mazo rival aleatorio" : "Random AI deck"}
                 >
                   <Shuffle className="h-3 w-3" />
                 </button>
@@ -840,7 +842,7 @@ export function DeckVsSelector({
             ) : (
               <Swords className="h-3.5 w-3.5" />
             )}
-            {starting ? `Starting\u2026` : `Fight!`}
+            {starting ? (spanish ? "Iniciando…" : "Starting…") : (spanish ? "¡Jugar!" : "Fight!")}
           </Button>
         </div>
       </div>
