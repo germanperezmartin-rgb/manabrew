@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 
 const HISTORY_LIMIT = 12;
 type HistoryEntry = { id: string; name: string; kind: string; text: string };
+let recentCards: HistoryEntry[] = [];
 
 export function ArcanaSpellAnnouncement({
   flash,
@@ -16,7 +17,7 @@ export function ArcanaSpellAnnouncement({
 }) {
   const { card } = flash;
   const duration = usePreferencesStore((state) => state.flashDurationMs);
-  const [history, setHistory] = useState<HistoryEntry[]>([]);
+  const [history, setHistory] = useState<HistoryEntry[]>(() => recentCards);
   const [showHistory, setShowHistory] = useState(false);
   const text = flash.effectText || card.text || "Consulta la pila para ver el efecto y sus objetivos.";
   const kind = flash.category === "ability" ? "Habilidad activada o disparada" : flash.category === "land" ? "Tierra jugada" : "Hechizo lanzado";
@@ -24,7 +25,8 @@ export function ArcanaSpellAnnouncement({
   useEffect(() => {
     if (card.isFaceDown || !card.identity.name) return;
     const entry = { id: card.id + ":" + Date.now(), name: card.identity.name, kind, text };
-    setHistory((old) => [entry, ...old].slice(0, HISTORY_LIMIT));
+    recentCards = [entry, ...recentCards].slice(0, HISTORY_LIMIT);
+    setHistory(recentCards);
   }, [card.id, card.identity.name, card.isFaceDown, kind, text]);
 
   if (card.isFaceDown || !card.identity.name) return null;
