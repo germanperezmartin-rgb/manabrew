@@ -9,6 +9,7 @@ import {
 } from "@/types/scryfall";
 import { platformFetch } from "@/lib/platformFetch";
 import { getPlatformType } from "@/platform";
+import { arcanaCatalogLookup, arcanaCatalogSearch, arcanaCatalogStats } from "@/lib/arcanaCatalog";
 import { loadScryfallImage } from "@/lib/scryfallImageSource";
 import { cachedCardGlintAsset } from "@/lib/cardGlintAssetCache";
 import {
@@ -135,6 +136,19 @@ export async function searchCards(
       "Failed to fetch cards from Scryfall",
     );
   } catch (error) {
+    // The user's complete 120k-printing SQLite import remains searchable even
+    // without Scryfall, including on Windows where the image cache has no route.
+    if (!/[:<>=!]|\\b(and|or|not)\\b/i.test(query)) {
+      const local = await arcanaCatalogSearch(query, page).catch(() => null);
+      if (local && (local.total > 0 || (await arcanaCatalogStats()).printings > 0)) {
+        return {
+          object: "list",
+          total_cards: local.total,
+          has_more: page * local.pageSize < local.total,
+          data: local.cards,
+        };
+      }
+    }
     if (error instanceof Error && error.message.endsWith("(HTTP 404)")) {
       return { object: "list", total_cards: 0, has_more: false, data: [] };
     }
@@ -306,6 +320,20 @@ export async function fetchCardCollection(
         signal,
       },
     ).catch(async (error) => {
+      const offline = await Promise.all(
+        batch.map((c) =>
+          arcanaCatalogLookup({
+            name: c.name,
+            setCode: c.setCode,
+            collectorNumber: c.collectorNumber,
+          }),
+        ),
+      );
+      const saved = offline.filter((card): card is ScryfallCard => card !== null);
+      if (saved.length > 0) {
+        fromCache = true;
+        return { data: saved };
+      }
       const cached = await localCardRecords(batch.map((c) => c.name));
       if (cached.size === 0) throw error;
       fromCache = true;
@@ -317,7 +345,7 @@ export async function fetchCardCollection(
       // Online that stays a miss, where a wrong printing would be a wrong card.
       const card =
         data.data.find((found) => matchesIdentifier(found, ids[idx])) ??
-        (fromCache
+        (fromCache && !c.setCode
           ? data.data.find((found) => matchesIdentifier(found, { name: c.name }))
           : undefined);
       // A set+number identifier carries no name, so a mistyped number would
