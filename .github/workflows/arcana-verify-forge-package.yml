@@ -1,0 +1,32 @@
+name: Arcana Arena - Verificar paquete Forge real
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/arcana-verify-forge-package.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Verificar binarios Forge Web Image
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Verificar publicacion y archivos del motor
+        shell: bash
+        run: |
+          mkdir -p /tmp/arcana-forge
+          npm pack @manabrew/forge-wasm@0.3.0 --silent --pack-destination /tmp/arcana-forge
+          tar -tzf /tmp/arcana-forge/*.tgz | grep -E 'package/forgeharness.js(.wasm)?$'
+          tar -xzf /tmp/arcana-forge/*.tgz -C /tmp/arcana-forge
+          test -s /tmp/arcana-forge/package/forgeharness.js
+          test -s /tmp/arcana-forge/package/forgeharness.js.wasm
+          wc -c /tmp/arcana-forge/package/forgeharness.js*
+          echo "El paquete publicado incluye el motor Forge real"
