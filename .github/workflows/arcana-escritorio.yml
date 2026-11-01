@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - arcana/solo-escritorio
+      - arcana/importador-scryfall-v1
   workflow_dispatch:
     inputs:
       plataforma:
