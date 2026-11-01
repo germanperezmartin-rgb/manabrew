@@ -1,0 +1,47 @@
+name: Arcana Arena - Formato del importador de escritorio
+
+on:
+  push:
+    branches:
+      - arcana/importador-scryfall-v1
+    paths:
+      - .github/workflows/arcana-format.yml
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    name: Aplicar formato Rust y TypeScript
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          persist-credentials: true
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: yarn
+      - name: Instalar Yarn y dependencias
+        run: |
+          npm install --global yarn
+          yarn install --frozen-lockfile --ignore-scripts
+      - name: Formatear Arcana
+        run: |
+          cargo fmt --all
+          yarn prettier --write src/views/ArcanaCatalogView.tsx src/views/ArcanaSimpleHome.tsx src/lib/arcanaCatalog.ts src/lib/localCardRecords.ts src/api/scryfall.ts src/api/scryfallBatch.ts src/components/layout/TopBar.tsx src/components/layout/navDestinations.ts src/router.tsx src/views/Play.tsx
+      - name: Guardar el formato en la rama
+        shell: bash
+        run: |
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git add src-tauri src/views src/lib src/api src/components src/router.tsx
+          if ! git diff --cached --quiet; then
+            git commit -m "style(arcana): format native importer and simplified desktop UI"
+            git push origin HEAD:arcana/importador-scryfall-v1
+          fi
