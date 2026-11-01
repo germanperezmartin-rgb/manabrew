@@ -4,7 +4,12 @@ import type { ZoneKind } from "@/protocol/game";
 import type { ClientCardDto, ClientGameView } from "@/stores/gameStore.types";
 
 export type GameViewTransition =
-  | { kind: "cardPlay"; card: ClientCardDto | null; effectText?: string }
+  | {
+      kind: "cardPlay";
+      card: ClientCardDto | null;
+      category: "spell" | "ability" | "land";
+      effectText?: string;
+    }
   | { kind: "turnStart"; playerId: string }
   | {
       kind:
@@ -81,11 +86,9 @@ export function gameViewTransitions(
 
   const previousStack = new Map(previous.stack.map((item) => [item.id, item]));
   for (const item of next.stack) {
-    if (
-      item.isCasting ||
-      nextLocations.get(item.sourceId) !== "stack" ||
-      previousLocations.get(item.sourceId) === "battlefield"
-    ) {
+    const sourceOnBattlefield = previousLocations.get(item.sourceId) === "battlefield";
+    const isAbility = sourceOnBattlefield || !!item.sourceAbilityText?.trim();
+    if (item.isCasting || (!isAbility && nextLocations.get(item.sourceId) !== "stack")) {
       continue;
     }
     const before = previousStack.get(item.id);
@@ -93,7 +96,8 @@ export function gameViewTransitions(
     transitions.push({
       kind: "cardPlay",
       card: item.sourceCard || item.identity ? stackObjectToCard(item) : null,
-      effectText: item.sourceAbilityText?.trim() || undefined,
+      category: isAbility ? "ability" : "spell",
+      effectText: isAbility ? item.sourceAbilityText?.trim() || item.text.trim() : undefined,
     });
   }
 
@@ -121,7 +125,7 @@ export function gameViewTransitions(
     } else if (card.identity.isToken && !previousLocations.has(card.id)) {
       transitions.push({ kind: "tokenCreate" });
     } else if (card.types.includes("Land") && landPlayed(card.controllerId)) {
-      transitions.push({ kind: "cardPlay", card });
+      transitions.push({ kind: "cardPlay", card, category: "land" });
     }
     if (card.attachedTo && card.attachedTo !== before?.attachedTo) {
       transitions.push({ kind: "cardAttach" });
@@ -177,11 +181,7 @@ export function flashItemOf(transition: GameViewTransition): FlashItem | null {
     return {
       kind: "card",
       card: transition.card,
-      category: transition.card.types.includes("Land")
-        ? "land"
-        : transition.effectText
-          ? "ability"
-          : "spell",
+      category: transition.category,
       effectText: transition.effectText,
     };
   }
