@@ -8,6 +8,7 @@ import { stripUsernameTag } from "@/lib/username";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { usePreferencesStore } from "@/stores/usePreferencesStore";
 import { useSignInDialog } from "@/stores/useSignInDialogStore";
+import { useArcanaSpanish } from "@/hooks/useArcanaSpanish";
 
 const NUDGE_STORAGE_KEY = "manabrew.signupNudge";
 const NUDGE_VERSION = "1";
@@ -17,6 +18,7 @@ const NUDGE_VERSION = "1";
  * the name and offers a rename or an account, without blocking play.
  */
 export function GuestNudge() {
+  const spanish = useArcanaSpanish();
   const signedOut = useAuthStore((s) => s.status !== "signedIn");
   const serverUsername = usePreferencesStore((s) => s.serverUsername);
   const showSignIn = useSignInDialog((s) => s.show);
@@ -29,20 +31,24 @@ export function GuestNudge() {
   const accounts = isFeatureEnabled("accounts");
   return (
     <section
-      aria-label={`Guest profile`}
+      aria-label={spanish ? "Perfil de invitado" : "Guest profile"}
       className="rounded-lg border border-brand-accent/25 bg-brand-accent-muted/60 p-3 backdrop-blur-md dark:border-border/60 dark:bg-background/60 sm:p-4"
     >
       <div className="flex items-start gap-3">
         <UserRound className="mt-0.5 h-4 w-4 shrink-0 text-brand-accent-foreground dark:text-primary" />
         <div className="min-w-0 flex-1 space-y-1">
           <p className="text-ui-body">
-            You are playing as{""}
+            {spanish ? "Estás jugando como " : "You are playing as"}{""}
             <span className="font-semibold">{stripUsernameTag(serverUsername)}</span>.
           </p>
           <p className="text-ui-body text-muted-foreground">
             {accounts
-              ? `Create a free account to claim your name and keep your decks on every device.`
-              : `Other players see this name at the table.`}
+              ? spanish
+                ? "Crea una cuenta gratuita para conservar tu nombre y tus mazos."
+                : "Create a free account to claim your name and keep your decks on every device."
+              : spanish
+                ? "Los demás jugadores verán este nombre en la mesa."
+                : "Other players see this name at the table."}
           </p>
         </div>
         <Button
@@ -50,7 +56,7 @@ export function GuestNudge() {
           size="icon-sm"
           className="-mr-1 -mt-1 shrink-0 text-muted-foreground"
           onClick={dismiss}
-          aria-label={`Dismiss`}
+          aria-label={spanish ? "Cerrar" : "Dismiss"}
         >
           <X className="h-3.5 w-3.5" />
         </Button>
@@ -63,11 +69,11 @@ export function GuestNudge() {
         <div className="mt-3 flex flex-wrap gap-2 sm:pl-7">
           {accounts && (
             <Button variant="primary" size="sm" onClick={() => showSignIn()}>
-              Create account
+              {spanish ? "Crear cuenta" : "Create account"}
             </Button>
           )}
           <Button variant="outline" size="sm" onClick={() => setRenaming(true)}>
-            Change name
+            {spanish ? "Cambiar nombre" : "Change name"}
           </Button>
         </div>
       )}
