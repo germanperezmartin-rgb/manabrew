@@ -5,6 +5,8 @@ import { useServerStore } from "@/stores/useServerStore";
 import { OfflinePlaySetup } from "@/components/play/OfflinePlaySetup";
 import { OfflinePlayShell } from "@/components/play/OfflinePlayShell";
 import { PlayHome } from "@/components/play/PlayHome";
+import ArcanaSimpleHome from "@/views/ArcanaSimpleHome";
+import { getPlatformType } from "@/platform";
 import { DeckPlayActions } from "@/components/play/DeckPlayActions";
 import Game from "./Game";
 import { isLiveEngineGameRouteState } from "@/game/engineGameLaunch";
@@ -222,7 +224,7 @@ export default function Play() {
     return <DeckPlayActions savedDeckId={savedDeckId} />;
   }
   if (pathname === ROUTES.PLAY) {
-    return <PlayHome />;
+    return getPlatformType() === "tauri" ? <ArcanaSimpleHome /> : <PlayHome />;
   }
   if (pathname === ROUTES.PLAY_OFFLINE_LIMITED) {
     return (
