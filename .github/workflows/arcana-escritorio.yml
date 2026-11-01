@@ -68,7 +68,7 @@ jobs:
         env:
           SELF_HOSTED_NODE_GRAAL_SMOKE: "1"
       - name: Generar instalador Windows sin firma
-        run: yarn tauri build --features forge-room --config src-tauri/tauri.dev.conf.json
+        run: yarn tauri build --features forge-room --config src-tauri/arcana.conf.json
       - uses: actions/upload-artifact@v4
         with:
           name: arcana-windows-instalador-sin-firma
@@ -125,7 +125,7 @@ jobs:
         env:
           SELF_HOSTED_NODE_GRAAL_SMOKE: "1"
       - name: Generar instalador macOS sin firma
-        run: yarn tauri build --features forge-room --config src-tauri/tauri.dev.conf.json
+        run: yarn tauri build --features forge-room --config src-tauri/arcana.conf.json
       - uses: actions/upload-artifact@v4
         with:
           name: arcana-macos-instalador-sin-firma
