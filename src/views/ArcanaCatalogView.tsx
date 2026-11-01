@@ -54,6 +54,8 @@ function SmallCard({
   active: boolean;
   onClick: () => void;
 }) {
+  const image = artwork(card);
+  const [imageFailed, setImageFailed] = useState(false);
   return (
     <button
       type="button"
@@ -71,12 +73,24 @@ function SmallCard({
             : "linear-gradient(145deg,#2b3b51,#101925)",
         }}
       >
-        <span className="mb-2 font-serif text-4xl" style={{ color: GOLD }}>
-          ✧
-        </span>
-        <span className="absolute bottom-3 left-2 right-2 text-center text-xs font-semibold text-slate-200">
-          {shorten(card.printed_name || card.name, 36)}
-        </span>
+        {image && !imageFailed ? (
+          <ScryfallImg
+            src={image}
+            alt={card.name}
+            loading="lazy"
+            onError={() => setImageFailed(true)}
+            className="h-full w-full object-contain"
+          />
+        ) : (
+          <>
+            <span className="mb-2 font-serif text-4xl" style={{ color: GOLD }}>
+              ✧
+            </span>
+            <span className="absolute bottom-3 left-2 right-2 text-center text-xs font-semibold text-slate-200">
+              {shorten(card.printed_name || card.name, 36)}
+            </span>
+          </>
+        )}
       </div>
       <div className="min-w-0">
         <p className="truncate text-sm font-semibold text-slate-100">{card.name}</p>
