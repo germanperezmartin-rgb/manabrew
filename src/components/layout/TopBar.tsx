@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { installDesktopUpdate } from "@/hooks/useDesktopUpdater";
 import { ROUTES } from "@/lib/constants";
+import { getPlatformType } from "@/platform";
 import { useDesktopUpdateStore } from "@/stores/useDesktopUpdateStore";
 import { AccountMenu } from "./AccountMenu";
 import { ManaBrewLogo } from "./ManaBrewLogo";
@@ -28,6 +29,7 @@ function getRouteTitle(pathname: string, search: string): string | null {
   if (pathname === ROUTES.LOBBY) {
     return `Multiplayer`;
   }
+  if (pathname === ROUTES.ARCANA_CATALOG) return "Mi colección";
   if (pathname === ROUTES.SEARCH) {
     return `Card Search`;
   }
@@ -91,6 +93,7 @@ export function TopBar({ override }: TopBarProps) {
   // AppShell hides this bar while the board is shown, so a live game never
   // reaches here except from another route, where it must stay navigable.
   const navigationDisabled = override?.navigationDisabled === true;
+  const arcanaDesktop = getPlatformType() === "tauri";
 
   const downloading = phase === "downloading";
   const updateLabel = downloading
@@ -112,11 +115,23 @@ export function TopBar({ override }: TopBarProps) {
       <button
         type="button"
         onClick={goHome}
-        aria-label={`Manabrew Home`}
+        aria-label={arcanaDesktop ? "Arcana Arena · Inicio" : "Manabrew Home"}
         className="group relative flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-xl border border-transparent px-0.5 py-0 motion-safe:transition-[background-color,border-color,box-shadow] hover:border-primary/30 hover:bg-primary/10 hover:shadow-sm focus-visible:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring touch:min-w-11 text-ui-label whitespace-normal"
       >
-        <ManaBrewLogo decorative height={60} className="-my-2 hidden shrink-0 sm:block" />
-        <ManaBrewLogo decorative variant="symbol" height={40} className="shrink-0 sm:hidden" />
+        {arcanaDesktop ? (
+          <span className="flex items-center gap-2.5 text-amber-100">
+            <span className="text-3xl text-[#e5ba74]" aria-hidden>✧</span>
+            <span className="flex flex-col items-start">
+              <span className="font-serif text-xl font-bold tracking-[0.16em]">ARCANA</span>
+              <span className="text-[9px] font-bold uppercase tracking-[0.30em] text-[#e5ba74]">ARENA DE CARTAS</span>
+            </span>
+          </span>
+        ) : (
+          <>
+            <ManaBrewLogo decorative height={60} className="-my-2 hidden shrink-0 sm:block" />
+            <ManaBrewLogo decorative variant="symbol" height={40} className="shrink-0 sm:hidden" />
+          </>
+        )}
       </button>
       {title && (
         <>
@@ -159,7 +174,7 @@ export function TopBar({ override }: TopBarProps) {
             </span>
           </Button>
         )}
-        <AccountMenu disabled={navigationDisabled} />
+        {!arcanaDesktop && <AccountMenu disabled={navigationDisabled} />}
       </div>
     </header>
   );
