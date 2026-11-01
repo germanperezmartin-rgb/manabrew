@@ -2489,7 +2489,7 @@ export default function Game({ exitTo }: GameProps = {}) {
       className="font-game game-touch-surface relative isolate flex flex-col h-full min-h-0 overflow-hidden select-none bg-canvas-background pb-[var(--safe-area-inset-bottom)] pl-[var(--safe-area-inset-left)] pr-[var(--safe-area-inset-right)] pt-[var(--safe-area-inset-top)]"
       style={
         {
-          "--flash-duration": `${flashDurationMs}ms`,
+          "--flash-duration": `${Math.max(0, flashDurationMs)}ms`,
           "--playable-ring-color": withAlpha(themeColors.cardRing, 0.75),
           "--playable-glow-color": withAlpha(themeColors.cardRing, 0.3),
           "--playable-ring-color-strong": themeColors.cardRing,
