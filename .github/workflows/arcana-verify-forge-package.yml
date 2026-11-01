@@ -23,6 +23,7 @@ jobs:
         shell: bash
         run: |
           mkdir -p /tmp/arcana-forge
+          npm view @manabrew/forge-wasm versions --json
           npm pack @manabrew/forge-wasm@0.3.0 --pack-destination /tmp/arcana-forge
           tar -tzf /tmp/arcana-forge/*.tgz | grep -E 'package/forgeharness.js(.wasm)?$'
           tar -xzf /tmp/arcana-forge/*.tgz -C /tmp/arcana-forge
