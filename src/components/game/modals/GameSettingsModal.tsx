@@ -120,6 +120,21 @@ export function GameSettingsModal({ onClose }: { onClose: () => void }) {
             onChange={prefs.setInGameCardPreviewStyle}
           />
         </Section>
+        <Section title="Arcana Arena · presentación de cartas">
+          <Choice
+            label="Duración de la carta ampliada"
+            value={String(prefs.flashDurationMs)}
+            options={[
+              { value: "500", label: "Muy rápida · 0,5 s" },
+              { value: "1500", label: "Normal · 1,5 s" },
+              { value: "3000", label: "Lenta · 3 s" },
+              { value: "5000", label: "Muy lenta · 5 s" },
+              { value: "-1", label: "Pausar hasta continuar" },
+            ]}
+            onChange={(value) => prefs.setFlashDurationMs(Number(value))}
+            hint="Al jugar una carta o mostrar una habilidad, podrás leerla antes de que siga la partida."
+          />
+        </Section>
         <Section title="Priority and prompts">
           <Choice
             label="Priority windows"
