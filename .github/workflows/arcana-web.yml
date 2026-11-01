@@ -48,6 +48,8 @@ jobs:
         run: yarn i18n:compile
       - name: Construir motor WebAssembly y datos de cartas
         run: yarn build:wasm
+      - name: Incorporar motor de reglas Forge real al navegador
+        run: node scripts/arcana-stage-forge-wasm.mjs
       - name: Verificar TypeScript y compilar interfaz
         run: yarn vite:build
       - name: Publicar artefacto web
