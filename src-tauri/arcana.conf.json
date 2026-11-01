@@ -1,0 +1,15 @@
+{
+  "productName": "Arcana Arena",
+  "identifier": "com.arcanaarena.personal",
+  "plugins": {
+    "updater": {
+      "endpoints": []
+    }
+  },
+  "bundle": {
+    "resources": {
+      "../forge-harness/native/build/libforgeharness.dylib": null,
+      "../forge-harness/native/build/forgeharness.dll": null
+    }
+  }
+}
