@@ -19,6 +19,7 @@ import type { DeckCard } from "@/protocol/deck";
 import type { ActivatableAbilityInfo } from "@/protocol/prompts/common";
 import type { ClientCardDto, ClientPlayerDto } from "@/stores/gameStore.types";
 import { GameModals } from "@/components/game/GameModals";
+import { ArcanaSpellAnnouncement } from "@/components/game/ArcanaSpellAnnouncement";
 import { LandscapeGate } from "@/components/LandscapeGate";
 import { GameLoadingScreen } from "@/components/game/GameLoadingScreen";
 import { GameFailedScreen } from "@/components/game/GameFailedScreen";
@@ -2515,6 +2516,7 @@ export default function Game({ exitTo }: GameProps = {}) {
         />
       )}
       <LandscapeGate />
+      {activeFlashCard && <ArcanaSpellAnnouncement card={activeFlashCard} />}
       <DevViewportFrame>
         <GameBoard
           boardSceneRef={boardSceneRef}
