@@ -23,6 +23,7 @@ import {
 } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/stores/useAuthStore";
+import { useArcanaSpanish } from "@/hooks/useArcanaSpanish";
 const TOOL_GRID_BY_COUNT: Record<number, string> = {
   2: "sm:grid-cols-2",
   3: "sm:grid-cols-2 xl:grid-cols-3",
@@ -48,6 +49,7 @@ const TOOLS = [
 ];
 export function PlayHomeLinks() {
   const signedIn = useAuthStore((state) => state.status === "signedIn");
+  const spanish = useArcanaSpanish();
   const tools =
     signedIn && isFeatureEnabled("accounts")
       ? [
@@ -61,16 +63,31 @@ export function PlayHomeLinks() {
           ...TOOLS,
         ]
       : TOOLS;
+  const localizedTools = spanish
+    ? tools.map((tool) => ({
+        ...tool,
+        label: ({
+          "My Collection": "Mi colección",
+          "Card Search": "Buscar cartas",
+          "Life Tracker": "Contador de vidas",
+        } as Record<string, string>)[tool.label] ?? tool.label,
+        desc: ({
+          "My Collection": "Organiza tus cartas e importa o exporta tu colección.",
+          "Card Search": "Consulta cartas, ediciones y aclaraciones de reglas.",
+          "Life Tracker": "Registra vidas, veneno y daño de comandante.",
+        } as Record<string, string>)[tool.label] ?? tool.desc,
+      }))
+    : tools;
   return (
     <>
-      <section aria-label={`More ways to play and tools`}>
+      <section aria-label={spanish ? "Otras formas de jugar y herramientas" : "More ways to play and tools"}>
         <div
           className={cn(
             "grid gap-4",
-            TOOL_GRID_BY_COUNT[tools.length] ?? "sm:grid-cols-2 xl:grid-cols-3",
+            TOOL_GRID_BY_COUNT[localizedTools.length] ?? "sm:grid-cols-2 xl:grid-cols-3",
           )}
         >
-          {tools.map(({ to, label, desc, icon, tone }, index) => (
+          {localizedTools.map(({ to, label, desc, icon, tone }, index) => (
             <FeatureTile
               key={to}
               to={to}
@@ -79,7 +96,7 @@ export function PlayHomeLinks() {
               icon={icon}
               tone={tone}
               className={cn(
-                tools.length % 2 === 1 && index === tools.length - 1 && "max-sm:col-span-2",
+                localizedTools.length % 2 === 1 && index === localizedTools.length - 1 && "max-sm:col-span-2",
               )}
             />
           ))}
@@ -87,27 +104,27 @@ export function PlayHomeLinks() {
       </section>
 
       <section
-        aria-label={`Utilities`}
+        aria-label={spanish ? "Utilidades" : "Utilities"}
         className="overflow-hidden rounded-xl border border-border/60 bg-background/60 backdrop-blur-md"
       >
         <ul className="divide-y divide-border/50 pb-1">
           <li>
             <Link to={ROUTES.SETTINGS} className={UTILITY_ROW_CLASS}>
               <Settings className="h-4 w-4 shrink-0 text-muted-foreground" />
-              Preferences
+              {spanish ? "Preferencias" : "Preferences"}
             </Link>
           </li>
           <li>
             <Link to={ROUTES.ABOUT} className={UTILITY_ROW_CLASS}>
               <Info className="h-4 w-4 shrink-0 text-muted-foreground" />
-              About Manabrew
+              {spanish ? "Acerca de Manabrew" : "About Manabrew"}
             </Link>
           </li>
           {DESIGN_SYSTEM_ENABLED && (
             <li>
               <Link to={ROUTES.DESIGN_SYSTEM} className={UTILITY_ROW_CLASS}>
                 <Palette className="h-4 w-4 shrink-0 text-muted-foreground" />
-                Design System
+                {spanish ? "Sistema de diseño" : "Design System"}
               </Link>
             </li>
           )}
