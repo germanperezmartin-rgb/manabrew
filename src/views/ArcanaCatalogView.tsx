@@ -27,6 +27,9 @@ import {
 } from "@/lib/arcanaCatalog";
 import { ROUTES } from "@/lib/constants";
 import type { ScryfallCard } from "@/types/scryfall";
+import { scryfallToDeckCard } from "@/lib/scryfall.utils";
+import { useDeckStore } from "@/stores/useDeckStore";
+import { usePreferredPrintsStore } from "@/stores/usePreferredPrintsStore";
 
 const NAVY = "#0c1626";
 const GOLD = "#e3b66c";
@@ -87,6 +90,8 @@ function SmallCard({
 
 export default function ArcanaCatalogView() {
   const navigate = useNavigate();
+  const savedDecks = useDeckStore((state) => state.savedDecks);
+  const [selectedDeckId, setSelectedDeckId] = useState("");
   const [stats, setStats] = useState<ArcanaCatalogStats | null>(null);
   const [searchText, setSearchText] = useState("");
   const [query, setQuery] = useState("");
@@ -207,6 +212,24 @@ export default function ArcanaCatalogView() {
     } catch {
       setMessage(`Copia esta línea para añadirla a tu mazo: ${text}`);
     }
+  }
+
+  function addSelectedToDeck() {
+    if (!selected || !selectedDeckId) return;
+    const saved = savedDecks.find((deck) => deck.id === selectedDeckId);
+    if (!saved) {
+      setError("Selecciona un mazo válido antes de añadir la carta.");
+      return;
+    }
+    useDeckStore.getState().addCardToSavedDeck(saved.id, scryfallToDeckCard(selected));
+    if (selected.oracle_id) {
+      usePreferredPrintsStore.getState().setPreferredPrint(selected.oracle_id, {
+        set: selected.set,
+        collectorNumber: selected.collector_number,
+        imageUrl: artwork(selected),
+      });
+    }
+    setMessage(`Añadida una copia de ${selected.name} (${selected.set.toUpperCase()} #${selected.collector_number}) a «${saved.deck.name}».`);
   }
 
   const totalPages = results ? Math.max(1, Math.ceil(results.total / results.pageSize)) : 1;
@@ -440,6 +463,33 @@ export default function ArcanaCatalogView() {
                     {selected.set_name} · {selected.set?.toUpperCase()} #{selected.collector_number}{" "}
                     · {selected.lang?.toUpperCase()}
                   </p>
+                  <div className="space-y-2 rounded-lg border border-[#50647c] bg-[#0b1726] p-3">
+                    <label htmlFor="arcana-target-deck" className="block text-xs font-semibold text-amber-100">
+                      Añadir esta edición a un mazo
+                    </label>
+                    <select
+                      id="arcana-target-deck"
+                      value={selectedDeckId}
+                      onChange={(event) => setSelectedDeckId(event.target.value)}
+                      className="w-full rounded-md border border-slate-600 bg-[#15283b] px-3 py-2 text-sm text-slate-100"
+                    >
+                      <option value="">Selecciona tu mazo…</option>
+                      {savedDecks.map((saved) => (
+                        <option key={saved.id} value={saved.id}>{saved.deck.name}</option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      onClick={addSelectedToDeck}
+                      disabled={!selectedDeckId}
+                      className="w-full rounded-md bg-[#e3b66c] px-4 py-2.5 text-sm font-bold text-slate-950 disabled:opacity-40"
+                    >
+                      Añadir 1 copia al mazo
+                    </button>
+                    {savedDecks.length === 0 && (
+                      <p className="text-xs text-slate-400">Primero crea un mazo en «Mis mazos».</p>
+                    )}
+                  </div>
                   <button
                     type="button"
                     onClick={() => void copyForDeck()}
