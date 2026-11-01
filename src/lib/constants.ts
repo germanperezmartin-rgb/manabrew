@@ -13,6 +13,7 @@ export const ROUTES = {
   SEARCH: "/search",
   DECK_EDITOR: "/deck-editor",
   MY_COLLECTION: "/mycollection",
+  ARCANA_CATALOG: "/catalogo",
   HUB: "/hub",
   HUB_TOP: "/hub/top",
   COMPANION: "/companion",
