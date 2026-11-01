@@ -138,7 +138,7 @@ export async function searchCards(
   } catch (error) {
     // The user's complete 120k-printing SQLite import remains searchable even
     // without Scryfall, including on Windows where the image cache has no route.
-    if (!/[:<>=!]|\\b(and|or|not)\\b/i.test(query)) {
+    if (!/[:<>=!]|\b(and|or|not)\b/i.test(query)) {
       const local = await arcanaCatalogSearch(query, page).catch(() => null);
       if (local && (local.total > 0 || (await arcanaCatalogStats()).printings > 0)) {
         return {
