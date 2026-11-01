@@ -280,7 +280,7 @@ pub async fn arcana_import_scryfall(app: tauri::AppHandle) -> Result<Option<Cata
         let _guard = ImportGuard;
         let chosen = rfd::FileDialog::new()
             .set_title("Arcana Arena · importar catálogo Scryfall")
-            .add_filter("Catálogo comprimido o JSONL", &["gz", "jsonl", "json"])
+            .add_filter("Catálogo comprimido o JSONL", &["gz", "jsonl"])
             .pick_file();
         let Some(chosen) = chosen else {
             return Ok(None);
@@ -439,4 +439,56 @@ pub fn arcana_catalog_printings(
         &[&oracle_id, &i64::from(page_size), &offset],
     )?;
     Ok(CatalogPage { total, page, page_size, cards })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use flate2::write::GzEncoder;
+    use flate2::Compression;
+    use std::io::Write;
+
+    #[test]
+    fn imports_gzipped_multiple_printings_and_keeps_exact_editions() {
+        let root = tempfile::tempdir().expect("tempdir");
+        let input = root.path().join("default-cards.jsonl.gz");
+        let output = root.path().join("catalog.sqlite3");
+        {
+            let file = File::create(&input).expect("create input");
+            let mut compressed = GzEncoder::new(file, Compression::default());
+            for line in [
+                r#"{"object":"card","id":"first","oracle_id":"forest-id","name":"Forest","set":"m11","collector_number":"250","lang":"en","released_at":"2010-01-01"}"#,
+                r#"{"object":"card","id":"second","oracle_id":"forest-id","name":"Forest","set":"blb","collector_number":"280","lang":"en","released_at":"2024-01-01"}"#,
+                r#"{"object":"card","id":"third","oracle_id":"bolt-id","name":"Lightning Bolt","set":"m11","collector_number":"149","lang":"en","released_at":"2010-01-01"}"#,
+            ] {
+                writeln!(compressed, "{line}").expect("write record");
+            }
+            compressed.finish().expect("finish gzip");
+        }
+        let stats = import_database(&input, &output, |_| {}).expect("import");
+        assert_eq!(stats.printings, 3);
+        assert_eq!(stats.unique_cards, 2);
+        let db = open_readonly(&output).expect("read db").expect("catalog");
+        let number: String = db
+            .query_row(
+                "SELECT collector_number FROM printings WHERE set_code = 'blb'",
+                [],
+                |row| row.get(0),
+            )
+            .expect("exact edition");
+        assert_eq!(number, "280");
+        let forest: i64 = db
+            .query_row(
+                "SELECT COUNT(*) FROM printings WHERE oracle_id = 'forest-id'",
+                [],
+                |row| row.get(0),
+            )
+            .expect("multiple printings");
+        assert_eq!(forest, 2);
+    }
+
+    #[test]
+    fn search_literal_escapes_wildcards() {
+        assert_eq!(like_pattern("a%b_c!"), "%a!%b!_c!!%");
+    }
 }
