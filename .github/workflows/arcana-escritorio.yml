@@ -1,16 +1,7 @@
-name: Arcana Arena - Compilar juego de escritorio
+name: Arcana Arena - Instalar en Windows
 
 on:
   workflow_dispatch:
-    inputs:
-      plataforma:
-        description: "Sistema para el instalador"
-        required: true
-        type: choice
-        default: Windows
-        options:
-          - Windows
-          - macOS
 
 permissions:
   contents: read
@@ -18,7 +9,6 @@ permissions:
 jobs:
   windows:
     name: Arcana Arena para Windows
-    if: inputs.plataforma == 'Windows'
     runs-on: windows-latest
     timeout-minutes: 120
     steps:
@@ -72,60 +62,5 @@ jobs:
           path: |
             target/release/bundle/nsis/*.exe
             target/release/bundle/msi/*.msi
-          if-no-files-found: error
-          retention-days: 30
-
-  macos:
-    name: Arcana Arena para macOS
-    if: inputs.plataforma == 'macOS'
-    runs-on: macos-latest
-    timeout-minutes: 120
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-          clean: true
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "24"
-          cache: yarn
-      - run: npm install --global yarn
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: wasm32-unknown-unknown
-      - uses: graalvm/setup-graalvm@v1
-        with:
-          java-version: "21"
-          distribution: graalvm-community
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          cache: maven
-      - uses: Swatinem/rust-cache@v2
-        with:
-          shared-key: arcana-macos
-      - uses: taiki-e/install-action@v2
-        with:
-          tool: wasm-pack@0.13.1
-      - name: Instalar dependencias
-        run: yarn install --frozen-lockfile
-      - name: Compilar traducciones
-        run: yarn i18n:compile
-      - name: Motor WebAssembly y cartas
-        run: yarn build:wasm
-      - name: Comprobar interfaz TypeScript
-        run: yarn vite:build
-      - name: Compilar motor Java Forge
-        run: yarn ensure:harness
-      - name: Compilar biblioteca nativa Forge
-        run: ./forge-harness/build-native.sh
-      - name: Probar biblioteca nativa
-        run: cargo run -p self-hosted-node --features graal-forge
-        env:
-          SELF_HOSTED_NODE_GRAAL_SMOKE: "1"
-      - name: Generar instalador macOS sin firma
-        run: yarn tauri build --features forge-room --config src-tauri/tauri.dev.conf.json
-      - uses: actions/upload-artifact@v4
-        with:
-          name: arcana-macos-instalador-sin-firma
-          path: target/release/bundle/dmg/*.dmg
           if-no-files-found: error
           retention-days: 30
