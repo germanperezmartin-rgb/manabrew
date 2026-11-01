@@ -1,0 +1,66 @@
+name: Arcana Arena - Probar inicio en navegador
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/arcana-smoke-web.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  browser-smoke:
+    name: Abrir Arcana web con Chromium
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: yarn
+      - name: Instalar dependencias
+        run: yarn install --frozen-lockfile --ignore-scripts
+      - name: Preparar navegador
+        run: npx playwright install --with-deps chromium
+      - name: Recuperar la primera compilacion web correcta
+        uses: actions/download-artifact@v4
+        with:
+          name: arcana-web-compilado
+          path: arcana-dist
+          run-id: 41351707121
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Servidor local con aislamiento WebAssembly
+        run: |
+          cat > /tmp/arcana-serve.py <<'PY'
+          import os
+          from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
+          os.chdir("arcana-dist")
+          class IsolatedHandler(SimpleHTTPRequestHandler):
+              def end_headers(self):
+                  self.send_header("Cross-Origin-Opener-Policy", "same-origin")
+                  self.send_header("Cross-Origin-Embedder-Policy", "require-corp")
+                  super().end_headers()
+          ThreadingHTTPServer(("127.0.0.1", 4173), IsolatedHandler).serve_forever()
+          PY
+          nohup python3 /tmp/arcana-serve.py > /tmp/arcana-server.log 2>&1 &
+          echo $! > /tmp/arcana-server.pid
+          sleep 3
+          curl -fI http://127.0.0.1:4173/
+      - name: Prueba de apertura de la interfaz
+        run: node scripts/arcana-browser-smoke.mjs
+      - name: Guardar captura y diagnostico
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: arcana-captura-prueba-web
+          path: |
+            arcana-captura.png
+            arcana-prueba.json
+            /tmp/arcana-server.log
+          if-no-files-found: warn
+          retention-days: 30
