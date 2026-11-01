@@ -1,5 +1,6 @@
 import { DeckHubEntryCard } from "@/components/deck/DeckHubEntryCard";
 import { CollapsibleDeckShelf } from "@/components/play/CollapsibleDeckShelf";
+import { useArcanaSpanish } from "@/hooks/useArcanaSpanish";
 import { DECK_SHELF_CARD_CLASS, DeckShelfRow } from "@/components/play/DeckShelfRow";
 import { Button } from "@/components/ui/button";
 import { useHubDeckSearch } from "@/hooks/useHubDeckSearch";
@@ -21,6 +22,7 @@ export function CommunityDeckShelf({
   onPlayDeck,
   pendingDeckId,
 }: CommunityDeckShelfProps) {
+  const spanish = useArcanaSpanish();
   const { decks, loading, error, retry } = useHubDeckSearch(
     "",
     undefined,
@@ -30,8 +32,8 @@ export function CommunityDeckShelf({
   );
   return (
     <CollapsibleDeckShelf
-      title={`Community decks`}
-      count={loading ? "Loading…" : decks.length}
+      title={spanish ? "Mazos de la comunidad" : "Community decks"}
+      count={loading ? (spanish ? "Cargando…" : "Loading…") : decks.length}
       open={open}
       onOpenChange={onOpenChange}
     >
@@ -43,7 +45,7 @@ export function CommunityDeckShelf({
           </Button>
         </div>
       ) : decks.length > 0 ? (
-        <DeckShelfRow label={`Community decks`}>
+        <DeckShelfRow label={spanish ? "Mazos de la comunidad" : "Community decks"}>
           {decks.map((entry) => (
             <div key={entry.id} className={DECK_SHELF_CARD_CLASS}>
               <DeckHubEntryCard
@@ -58,7 +60,7 @@ export function CommunityDeckShelf({
           ))}
         </DeckShelfRow>
       ) : loading ? (
-        <DeckShelfRow label="Community decks">
+        <DeckShelfRow label={spanish ? "Mazos de la comunidad" : "Community decks"}>
           {Array.from({ length: 10 }, (_, index) => (
             <div
               key={index}
@@ -71,7 +73,7 @@ export function CommunityDeckShelf({
         </DeckShelfRow>
       ) : (
         <p className="px-2 text-ui-meta italic text-muted-foreground">
-          No Community decks are available.
+          {spanish ? "No hay mazos de la comunidad disponibles." : "No Community decks are available."}
         </p>
       )}
     </CollapsibleDeckShelf>
