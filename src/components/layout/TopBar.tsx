@@ -120,10 +120,14 @@ export function TopBar({ override }: TopBarProps) {
       >
         {arcanaDesktop ? (
           <span className="flex items-center gap-2.5 text-amber-100">
-            <span className="text-3xl text-[#e5ba74]" aria-hidden>✧</span>
+            <span className="text-3xl text-[#e5ba74]" aria-hidden>
+              ✧
+            </span>
             <span className="flex flex-col items-start">
               <span className="font-serif text-xl font-bold tracking-[0.16em]">ARCANA</span>
-              <span className="text-[9px] font-bold uppercase tracking-[0.30em] text-[#e5ba74]">ARENA DE CARTAS</span>
+              <span className="text-[9px] font-bold uppercase tracking-[0.30em] text-[#e5ba74]">
+                ARENA DE CARTAS
+              </span>
             </span>
           </span>
         ) : (

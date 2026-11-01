@@ -87,8 +87,10 @@ export function normalizeIdentifierForRequest(id: CardIdentifier): CardIdentifie
  */
 function cachedCard(id: CardIdentifier): Promise<ScryfallCard | null> {
   if ("collector_number" in id) return localPrintingRecord(id.set, id.collector_number);
-  if ("name" in id) return arcanaCatalogLookup({ name: id.name, setCode: id.set })
-    .then((card) => card ?? localCardRecord(id.name));
+  if ("name" in id)
+    return arcanaCatalogLookup({ name: id.name, setCode: id.set }).then(
+      (card) => card ?? localCardRecord(id.name),
+    );
   if ("id" in id) return arcanaCatalogLookup({ id: id.id });
   return Promise.resolve(null);
 }

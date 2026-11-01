@@ -7,7 +7,10 @@ import { ROUTES } from "@/lib/constants";
 const GOLD = "#e5ba74";
 
 function Feature({
-  title, description, onClick, icon: Icon,
+  title,
+  description,
+  onClick,
+  icon: Icon,
 }: {
   title: string;
   description: string;
@@ -15,8 +18,11 @@ function Feature({
   icon: typeof Swords;
 }) {
   return (
-    <button type="button" onClick={onClick}
-      className="group min-w-0 rounded-xl border border-[#33455e] bg-[#142237] p-6 text-left transition-colors hover:border-[#dcb16d] hover:bg-[#1a2b40]">
+    <button
+      type="button"
+      onClick={onClick}
+      className="group min-w-0 rounded-xl border border-[#33455e] bg-[#142237] p-6 text-left transition-colors hover:border-[#dcb16d] hover:bg-[#1a2b40]"
+    >
       <div className="flex items-start justify-between">
         <Icon className="h-6 w-6 text-[#e5ba74]" />
         <ArrowUpRight className="h-4 w-4 text-[#e5ba74] transition-transform group-hover:-translate-y-1 group-hover:translate-x-1" />
@@ -32,10 +38,14 @@ export default function ArcanaSimpleHome() {
   const [catalog, setCatalog] = useState<ArcanaCatalogStats | null>(null);
   useEffect(() => {
     let mounted = true;
-    void arcanaCatalogStats().then((result) => {
-      if (mounted) setCatalog(result);
-    }).catch(() => {});
-    return () => { mounted = false; };
+    void arcanaCatalogStats()
+      .then((result) => {
+        if (mounted) setCatalog(result);
+      })
+      .catch(() => {});
+    return () => {
+      mounted = false;
+    };
   }, []);
   const hasCatalog = Boolean(catalog?.printings);
 
@@ -51,37 +61,57 @@ export default function ArcanaSimpleHome() {
               Arcana Arena · Tu juego de cartas
             </p>
             <h1 className="mt-5 font-serif text-4xl font-semibold leading-[1.12] text-[#faf1df] sm:text-5xl lg:text-6xl">
-              Más clara.<br />Más pausada.<br />Más estratégica.
+              Más clara.
+              <br />
+              Más pausada.
+              <br />
+              Más estratégica.
             </h1>
             <p className="mt-6 max-w-[620px] text-base leading-relaxed text-slate-300">
-              Juega Magic con las reglas automáticas de Forge, prepara tus propios
-              mazos y explora todas las ediciones de tus cartas desde el ordenador.
+              Juega Magic con las reglas automáticas de Forge, prepara tus propios mazos y explora
+              todas las ediciones de tus cartas desde el ordenador.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <button type="button"
+              <button
+                type="button"
                 onClick={() => navigate(ROUTES.PLAY_OFFLINE_CONSTRUCTED)}
                 className="inline-flex min-h-12 items-center gap-2 rounded-lg px-6 py-3 font-bold text-[#101a27] shadow-lg"
-                style={{ background: GOLD }}>
+                style={{ background: GOLD }}
+              >
                 <Swords className="h-5 w-5" /> Jugar contra la IA
               </button>
-              <button type="button" onClick={() => navigate(ROUTES.ARCANA_CATALOG)}
-                className="inline-flex min-h-12 items-center gap-2 rounded-lg border border-[#51627c] px-6 py-3 font-semibold text-slate-100 hover:bg-slate-700/40">
-                <Database className="h-5 w-5" /> {hasCatalog ? "Ver mi colección" : "Importar mis cartas"}
+              <button
+                type="button"
+                onClick={() => navigate(ROUTES.ARCANA_CATALOG)}
+                className="inline-flex min-h-12 items-center gap-2 rounded-lg border border-[#51627c] px-6 py-3 font-semibold text-slate-100 hover:bg-slate-700/40"
+              >
+                <Database className="h-5 w-5" />{" "}
+                {hasCatalog ? "Ver mi colección" : "Importar mis cartas"}
               </button>
             </div>
           </div>
-          <div className="relative hidden min-h-[430px] items-center justify-center lg:flex"
-            style={{ background: "radial-gradient(circle,#263a41 0%,#101e2d 45%,#0e1a2a 75%)" }}>
+          <div
+            className="relative hidden min-h-[430px] items-center justify-center lg:flex"
+            style={{ background: "radial-gradient(circle,#263a41 0%,#101e2d 45%,#0e1a2a 75%)" }}
+          >
             <div className="absolute h-80 w-80 rounded-full border border-[#b9955b]/70" />
             <div className="absolute h-64 w-64 rotate-[-31deg] rounded-3xl border border-[#71939b]/60" />
             <div className="absolute h-[23rem] w-[23rem] rounded-full border border-dashed border-[#af935d]/40" />
-            <span className="relative z-10 font-serif text-[110px]" style={{ color: GOLD }} aria-hidden>✧</span>
+            <span
+              className="relative z-10 font-serif text-[110px]"
+              style={{ color: GOLD }}
+              aria-hidden
+            >
+              ✧
+            </span>
           </div>
         </section>
 
         <div className="flex flex-wrap items-end justify-between gap-2">
           <div>
-            <h2 className="font-serif text-2xl font-semibold text-[#f8f0e1]">Explora Arcana Arena</h2>
+            <h2 className="font-serif text-2xl font-semibold text-[#f8f0e1]">
+              Explora Arcana Arena
+            </h2>
             <p className="mt-1 text-sm text-slate-400">Cuatro destinos, sin menús innecesarios.</p>
           </div>
           <p className="text-xs font-bold uppercase tracking-[0.26em]" style={{ color: GOLD }}>
@@ -89,20 +119,34 @@ export default function ArcanaSimpleHome() {
           </p>
         </div>
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <Feature icon={Swords} title="Duelo contra la IA"
+          <Feature
+            icon={Swords}
+            title="Duelo contra la IA"
             description="Elige dos mazos y juega con el motor auténtico de Forge."
-            onClick={() => navigate(ROUTES.PLAY_OFFLINE_CONSTRUCTED)} />
-          <Feature icon={Layers3} title="Mis mazos"
+            onClick={() => navigate(ROUTES.PLAY_OFFLINE_CONSTRUCTED)}
+          />
+          <Feature
+            icon={Layers3}
+            title="Mis mazos"
             description="Crea mazos, importa listas y prepara la siguiente partida."
-            onClick={() => navigate(ROUTES.DECK_EDITOR)} />
-          <Feature icon={Database} title="Mi colección"
-            description={hasCatalog
-              ? `${catalog?.printings.toLocaleString("es-ES")} impresiones descargadas en este equipo.`
-              : "Importa tu archivo Scryfall con todas las ediciones."}
-            onClick={() => navigate(ROUTES.ARCANA_CATALOG)} />
-          <Feature icon={Users} title="Dos jugadores"
+            onClick={() => navigate(ROUTES.DECK_EDITOR)}
+          />
+          <Feature
+            icon={Database}
+            title="Mi colección"
+            description={
+              hasCatalog
+                ? `${catalog?.printings.toLocaleString("es-ES")} impresiones descargadas en este equipo.`
+                : "Importa tu archivo Scryfall con todas las ediciones."
+            }
+            onClick={() => navigate(ROUTES.ARCANA_CATALOG)}
+          />
+          <Feature
+            icon={Users}
+            title="Dos jugadores"
             description="Abre las opciones de mesa para jugar con otra persona."
-            onClick={() => navigate(ROUTES.LOBBY)} />
+            onClick={() => navigate(ROUTES.LOBBY)}
+          />
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-5 rounded-xl border border-[#4a6d6a] bg-[#132d34] p-6">
@@ -114,22 +158,27 @@ export default function ArcanaSimpleHome() {
               Forge para las reglas. Scryfall para las ediciones.
             </h3>
             <p className="mt-2 max-w-[800px] text-sm leading-relaxed text-slate-300">
-              Importar las cartas permite buscarlas y preparar mazos sin Internet.
-              Las imágenes se descargan por separado cuando quieras guardarlas.
+              Importar las cartas permite buscarlas y preparar mazos sin Internet. Las imágenes se
+              descargan por separado cuando quieras guardarlas.
             </p>
           </div>
-          <button type="button" onClick={() => navigate(ROUTES.ARCANA_CATALOG)}
+          <button
+            type="button"
+            onClick={() => navigate(ROUTES.ARCANA_CATALOG)}
             className="inline-flex items-center gap-2 rounded-lg px-5 py-3 font-bold text-[#12202b]"
-            style={{ background: GOLD }}>
+            style={{ background: GOLD }}
+          >
             <BookOpen className="h-4 w-4" /> Abrir la colección
           </button>
         </div>
 
         <footer className="flex justify-between gap-3 border-t border-slate-700/50 py-4 text-xs text-slate-500">
           <span>Arcana Arena · Edición de escritorio</span>
-          <span>{catalog?.printings
-            ? `${catalog.printings.toLocaleString("es-ES")} impresiones de Scryfall en tu equipo`
-            : "Importa un catálogo para comenzar"}</span>
+          <span>
+            {catalog?.printings
+              ? `${catalog.printings.toLocaleString("es-ES")} impresiones de Scryfall en tu equipo`
+              : "Importa un catálogo para comenzar"}
+          </span>
         </footer>
       </div>
     </main>

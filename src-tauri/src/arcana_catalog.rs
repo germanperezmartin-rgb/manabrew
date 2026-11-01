@@ -80,11 +80,9 @@ fn read_stats(db: &Connection) -> Result<CatalogStats, String> {
         )
         .map_err(|e| e.to_string())?;
     let meta = |key: &str| -> String {
-        db.query_row(
-            "SELECT value FROM meta WHERE key = ?1",
-            [key],
-            |row| row.get::<_, String>(0),
-        )
+        db.query_row("SELECT value FROM meta WHERE key = ?1", [key], |row| {
+            row.get::<_, String>(0)
+        })
         .optional()
         .ok()
         .flatten()
@@ -117,7 +115,8 @@ fn open_source(path: &Path) -> Result<Box<dyn BufRead>, String> {
     let mut magic = [0_u8; 2];
     file.read_exact(&mut magic)
         .map_err(|_| "El archivo está vacío o incompleto".to_string())?;
-    file.seek(SeekFrom::Start(0)).map_err(|err| err.to_string())?;
+    file.seek(SeekFrom::Start(0))
+        .map_err(|err| err.to_string())?;
     if magic == [0x1f, 0x8b] {
         Ok(Box::new(BufReader::new(GzDecoder::new(file))))
     } else {
@@ -208,7 +207,11 @@ fn import_database(
                     .map_err(|err| format!("No se pudo guardar la línea {processed}: {err}"))?;
                 imported += 1;
                 if processed % 1_500 == 0 {
-                    progress(ImportProgress { processed, imported, ignored });
+                    progress(ImportProgress {
+                        processed,
+                        imported,
+                        ignored,
+                    });
                 }
             }
         }
@@ -243,7 +246,11 @@ fn import_database(
          ANALYZE;",
     )
     .map_err(|err| err.to_string())?;
-    progress(ImportProgress { processed, imported, ignored });
+    progress(ImportProgress {
+        processed,
+        imported,
+        ignored,
+    });
     read_stats(&db)
 }
 
@@ -321,7 +328,11 @@ fn collect_cards(
 }
 
 fn like_pattern(search: &str) -> String {
-    let escaped = search.trim().replace('!', "!!").replace('%', "!%").replace('_', "!_");
+    let escaped = search
+        .trim()
+        .replace('!', "!!")
+        .replace('%', "!%")
+        .replace('_', "!_");
     format!("%{escaped}%")
 }
 
@@ -335,7 +346,12 @@ pub async fn arcana_catalog_search(
         let page = page.unwrap_or(1).clamp(1, 10_000);
         let page_size = 36_u32;
         let Some(db) = open_readonly(&sqlite_path(&app)?)? else {
-            return Ok(CatalogPage { total: 0, page, page_size, cards: Vec::new() });
+            return Ok(CatalogPage {
+                total: 0,
+                page,
+                page_size,
+                cards: Vec::new(),
+            });
         };
         let pattern = like_pattern(&query);
         let filter = "(name LIKE ?1 ESCAPE '!' COLLATE NOCASE
@@ -358,7 +374,12 @@ pub async fn arcana_catalog_search(
             ),
             &[&pattern, &i64::from(page_size), &offset],
         )?;
-        Ok(CatalogPage { total, page, page_size, cards })
+        Ok(CatalogPage {
+            total,
+            page,
+            page_size,
+            cards,
+        })
     })
     .await
     .map_err(|err| err.to_string())?
@@ -376,9 +397,13 @@ pub fn arcana_catalog_lookup(
         return Ok(None);
     };
     let raw: Option<String> = if let Some(id) = id {
-        db.query_row("SELECT record_json FROM printings WHERE scryfall_id = ?1", [id], |r| r.get(0))
-            .optional()
-            .map_err(|err| err.to_string())?
+        db.query_row(
+            "SELECT record_json FROM printings WHERE scryfall_id = ?1",
+            [id],
+            |r| r.get(0),
+        )
+        .optional()
+        .map_err(|err| err.to_string())?
     } else if let (Some(set), Some(number)) = (&set_code, &collector_number) {
         db.query_row(
             "SELECT record_json FROM printings
@@ -426,10 +451,19 @@ pub fn arcana_catalog_printings(
     let page = page.unwrap_or(1).clamp(1, 10_000);
     let page_size = 30_u32;
     let Some(db) = open_readonly(&sqlite_path(&app)?)? else {
-        return Ok(CatalogPage { total: 0, page, page_size, cards: Vec::new() });
+        return Ok(CatalogPage {
+            total: 0,
+            page,
+            page_size,
+            cards: Vec::new(),
+        });
     };
     let total: u64 = db
-        .query_row("SELECT COUNT(*) FROM printings WHERE oracle_id = ?1", [&oracle_id], |r| r.get(0))
+        .query_row(
+            "SELECT COUNT(*) FROM printings WHERE oracle_id = ?1",
+            [&oracle_id],
+            |r| r.get(0),
+        )
         .map_err(|err| err.to_string())?;
     let offset = i64::from(page - 1) * i64::from(page_size);
     let cards = collect_cards(
@@ -438,7 +472,12 @@ pub fn arcana_catalog_printings(
          ORDER BY released_at DESC, set_code, collector_number LIMIT ?2 OFFSET ?3",
         &[&oracle_id, &i64::from(page_size), &offset],
     )?;
-    Ok(CatalogPage { total, page, page_size, cards })
+    Ok(CatalogPage {
+        total,
+        page,
+        page_size,
+        cards,
+    })
 }
 
 #[cfg(test)]

@@ -67,8 +67,7 @@ export async function localPrintingRecord(
   return (
     (await readNearest<ScryfallCard>(
       `/scryfall-card/${encodeURIComponent(set)}/${encodeURIComponent(collectorNumber)}`,
-    )) ??
-    (await arcanaCatalogLookup({ setCode: set, collectorNumber }))
+    )) ?? (await arcanaCatalogLookup({ setCode: set, collectorNumber }))
   );
 }
 
