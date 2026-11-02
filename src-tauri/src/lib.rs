@@ -1,6 +1,7 @@
 #![allow(clippy::too_many_arguments)]
 
 mod arcana_catalog;
+mod arcana_art;
 mod asset_server;
 mod card_db;
 mod commands;
@@ -86,6 +87,10 @@ pub fn run() {
         .manage(forge_room::ForgeRoomHost::new())
         .manage(local_relay::LocalRelayHost::new())
         .invoke_handler(tauri::generate_handler![
+            arcana_art::arcana_art_download,
+            arcana_art::arcana_art_status,
+            arcana_art::arcana_art_cancel,
+            arcana_art::arcana_art_open_folder,
             arcana_catalog::arcana_import_scryfall,
             arcana_catalog::arcana_catalog_stats,
             arcana_catalog::arcana_catalog_search,
