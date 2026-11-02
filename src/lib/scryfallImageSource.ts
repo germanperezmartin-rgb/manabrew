@@ -93,6 +93,16 @@ async function fetchImageBytes(url: string): Promise<Blob> {
       }
     }
   }
+  // Windows has no /scryfall-img/ HTTP endpoint. Read downloaded pictures
+  // directly from the desktop's protected on-disk cache via IPC.
+  if (key && getPlatformType() === "tauri") {
+    try {
+      const saved = await getPlatform().invoke<number[] | null>("read_cached_card_art", { url });
+      if (saved?.length) return new Blob([new Uint8Array(saved)], { type: imageMimeFromUrl(url) });
+    } catch {
+      // A missing file can still be downloaded through the normal CDN fallback.
+    }
+  }
   // cache: "reload" bypasses any non-CORS entry the display <img> cached for
   // this URL — a plain fetch would reuse it and CORS-fail.
   const res = await platformFetch(url, { cache: "reload" });
