@@ -14,6 +14,7 @@ import {
   type BoardBackgroundId,
 } from "@/pixi/board/boardBackgrounds";
 import { cn } from "@/lib/utils";
+import { useArcanaSpanish } from "@/hooks/useArcanaSpanish";
 import type { RoomPlayerInfo } from "@/types/server";
 
 const SEATS: RoomPlayerInfo[] = [
@@ -46,6 +47,7 @@ export function TablePickerDialog({
   players = SEATS,
   maxPlayers = 2,
 }: TablePickerDialogProps) {
+  const spanish = useArcanaSpanish();
   return (
     <Dialog
       open={open}
@@ -55,8 +57,8 @@ export function TablePickerDialog({
     >
       <DialogContent className="sm:max-w-3xl overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Choose your table</DialogTitle>
-          <DialogDescription>{description}</DialogDescription>
+          <DialogTitle>{spanish ? "Elige tu mesa" : "Choose your table"}</DialogTitle>
+          <DialogDescription>{spanish && description === "The felt you'll play this game on." ? "Elige el tablero sobre el que jugarás." : description}</DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 sm:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
           <div className="flex items-center justify-center rounded-xl border border-border bg-canvas-background p-3">
@@ -97,7 +99,7 @@ export function TablePickerDialog({
                     />
                   ) : (
                     <span className="flex aspect-[16/9] w-full items-center justify-center bg-canvas-background text-ui-label text-text-muted">
-                      None
+                      {spanish ? "Ninguno" : "None"}
                     </span>
                   )}
                 </button>
@@ -107,10 +109,10 @@ export function TablePickerDialog({
         </div>
         <div className="flex justify-end gap-2">
           <Button variant="ghost" onClick={onCancel}>
-            Back
+            {spanish ? "Volver" : "Back"}
           </Button>
           <Button variant="primary" onClick={onStart}>
-            {startLabel}
+            {spanish && startLabel === "Fight" ? "¡Jugar!" : startLabel}
           </Button>
         </div>
       </DialogContent>
