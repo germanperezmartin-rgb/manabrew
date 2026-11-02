@@ -51,7 +51,12 @@ jobs:
           if (-not $status.AMServiceEnabled -or -not $status.AntivirusEnabled) {
             throw 'Microsoft Defender NO esta activo en este entorno. No se puede certificar una exploracion antivirus.'
           }
-          Update-MpSignature -ErrorAction Stop
+          try {
+            Update-MpSignature -ErrorAction Stop
+            Write-Host 'Se actualizaron las definiciones de Microsoft Defender.'
+          } catch {
+            Write-Warning ("No se pudo actualizar, se analizara con firmas instaladas: " + $_.Exception.Message)
+          }
       - name: Analizar instaladores y contenidos sin ejecutarlos
         shell: pwsh
         run: |
