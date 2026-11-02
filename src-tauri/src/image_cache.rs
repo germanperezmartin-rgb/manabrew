@@ -49,6 +49,16 @@ pub fn cache_card_records(records: Vec<serde_json::Value>) -> Result<usize, Stri
     Ok(cache.store_records(&records))
 }
 
+/// Windows uses Tauri's embedded origin and does not serve the cache through
+/// /scryfall-img/. Return only Scryfall CDN images already stored on disk.
+/// Never open an arbitrary path provided by the browser.
+#[tauri::command]
+pub fn read_cached_card_art(url: String) -> Result<Option<Vec<u8>>, String> {
+    let key = key_from_url(&url).ok_or_else(|| "URL de imagen no válida".to_owned())?;
+    let cache = cache().ok_or_else(|| "Caché de imágenes no disponible".to_owned())?;
+    Ok(cache.read(&key))
+}
+
 #[tauri::command]
 pub async fn preseed_card_art(urls: Vec<String>) -> Result<PreseedResult, String> {
     let cache = cache().ok_or_else(|| "no cache directory".to_string())?;

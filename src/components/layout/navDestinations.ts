@@ -1,6 +1,8 @@
 import type { ComponentType } from "react";
 import {
   Github,
+  Home,
+  Settings2,
   HeartPulse,
   Info,
   Layers,
@@ -15,6 +17,7 @@ import { DiscordIcon } from "@/components/icons/DiscordIcon";
 import { DESIGN_SYSTEM_ENABLED } from "@/config/designSystem";
 import { isFeatureEnabled } from "@/featureFlags";
 import { DISCORD_INVITE_URL, GITHUB_REPO_URL, ROUTES } from "@/lib/constants";
+import { getPlatformType } from "@/platform";
 export interface NavDestination {
   to: string;
   label: string;
@@ -47,6 +50,15 @@ export function isNavDestinationActive(to: string, pathname: string): boolean {
   return pathname === to || pathname.startsWith(`${to}/`);
 }
 export function getTopBarNav(signedIn = false): NavDestination[] {
+  if (getPlatformType() === "tauri") {
+    // Desktop Arcana intentionally has only the four entries of the original HTML.
+    return [
+      { to: ROUTES.PLAY, label: "Inicio", icon: Home },
+      { to: ROUTES.DECK_EDITOR, label: "Mis mazos", icon: Layers },
+      { to: ROUTES.ARCANA_CATALOG, label: "Colección", icon: LibraryBig },
+      { to: ROUTES.SETTINGS, label: "Ajustes", icon: Settings2 },
+    ];
+  }
   const direct: NavDestination[] = [
     { to: ROUTES.PLAY_OFFLINE_CONSTRUCTED, label: `Singleplayer`, icon: Swords },
     { to: ROUTES.LOBBY, label: `Multiplayer`, icon: Users },

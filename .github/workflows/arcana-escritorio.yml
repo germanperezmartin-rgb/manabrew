@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - arcana/solo-escritorio
+      - arcana/importador-scryfall-v1
   workflow_dispatch:
 
 permissions:
@@ -59,6 +60,32 @@ jobs:
           SELF_HOSTED_NODE_GRAAL_SMOKE: "1"
       - name: Generar instalador Windows sin firma
         run: yarn tauri build --features forge-room --config src-tauri/arcana.conf.json
+      - name: Verificar instalador real y DLL de Forge junto al ejecutable
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $installer = Get-ChildItem "target/release/bundle/nsis" -Filter "*setup.exe" | Select-Object -First 1
+          if (-not $installer) { throw "No existe el instalador .exe de Windows" }
+          $tool = Get-Command 7z -ErrorAction SilentlyContinue
+          if (-not $tool) { throw "7-Zip no esta disponible en el ejecutor Windows" }
+          $target = Join-Path $env:RUNNER_TEMP "arcana-nsis-verificacion"
+          New-Item -ItemType Directory -Path $target -Force | Out-Null
+          & 7z x "-o$target" -y "$($installer.FullName)" | Out-Null
+          if ($LASTEXITCODE -ne 0) { throw "No se pudo extraer el instalador NSIS" }
+          # Tauri keeps Cargo's binary name (manabrew.exe) inside the Arcana Arena installer.
+          $app = Get-ChildItem $target -File -Recurse -Filter "manabrew.exe" | Select-Object -First 1
+          if (-not $app) { throw "El instalador no contiene manabrew.exe" }
+          $dll = Join-Path $app.DirectoryName "forgeharness.dll"
+          if (-not (Test-Path -LiteralPath $dll -PathType Leaf)) {
+            Get-ChildItem $target -Recurse -Filter "forgeharness.dll" |
+              ForEach-Object { Write-Host "DLL mal situada: $($_.FullName)" }
+            throw "Falta forgeharness.dll junto a manabrew.exe: no publicar instalador"
+          }
+          $dllFile = Get-Item -LiteralPath $dll
+          if ($dllFile.Length -lt 1MB) {
+            throw "La DLL de Forge esta vacia o incompleta: $($dllFile.Length) bytes"
+          }
+          Write-Host "OK: manabrew.exe y forgeharness.dll en el mismo directorio, DLL $($dllFile.Length) bytes"
       - uses: actions/upload-artifact@v4
         with:
           name: arcana-windows-instalador-sin-firma

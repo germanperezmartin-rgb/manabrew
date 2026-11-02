@@ -16,6 +16,7 @@ import { cardDataCached } from "@/api/cardArtCache";
 import { lanCacheUrl } from "@/lib/lanCache";
 import { localCardArtRouteAvailable } from "@/lib/scryfallImageSource";
 import { getPlatformType } from "@/platform";
+import { arcanaCatalogLookup } from "@/lib/arcanaCatalog";
 
 let cachedCount: Promise<number> | null = null;
 
@@ -45,8 +46,13 @@ async function readNearest<T>(path: string): Promise<T | null> {
 }
 
 /** The record for one exact name, from the nearest machine that has it. */
-export function localCardRecord(name: string): Promise<ScryfallCard | null> {
-  return readNearest<ScryfallCard>(`/scryfall-card/${encodeURIComponent(name)}`);
+export async function localCardRecord(name: string): Promise<ScryfallCard | null> {
+  // This is essential on Windows: its Tauri embedded scheme does not expose
+  // /scryfall-card/ even when a desktop catalog is imported.
+  return (
+    (await readNearest<ScryfallCard>(`/scryfall-card/${encodeURIComponent(name)}`)) ??
+    (await arcanaCatalogLookup({ name }))
+  );
 }
 
 /**
@@ -54,12 +60,14 @@ export function localCardRecord(name: string): Promise<ScryfallCard | null> {
  * every-card download chose, or the one a deck carried — so this answers for a
  * deck whose art was downloaded and misses otherwise.
  */
-export function localPrintingRecord(
+export async function localPrintingRecord(
   set: string,
   collectorNumber: string,
 ): Promise<ScryfallCard | null> {
-  return readNearest<ScryfallCard>(
-    `/scryfall-card/${encodeURIComponent(set)}/${encodeURIComponent(collectorNumber)}`,
+  return (
+    (await readNearest<ScryfallCard>(
+      `/scryfall-card/${encodeURIComponent(set)}/${encodeURIComponent(collectorNumber)}`,
+    )) ?? (await arcanaCatalogLookup({ setCode: set, collectorNumber }))
   );
 }
 

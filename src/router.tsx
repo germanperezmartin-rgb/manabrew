@@ -25,6 +25,7 @@ import Search from "@/views/Search";
 import DeckHub from "@/views/DeckHub";
 import AuthCallback from "@/views/AuthCallback";
 import MyCollection from "@/views/MyCollection";
+import ArcanaCatalogView from "@/views/ArcanaCatalogView";
 
 export const router = createBrowserRouter([
   {
@@ -59,6 +60,14 @@ export const router = createBrowserRouter([
         element: (
           <ErrorBoundary context="Lobby">
             <Lobby />
+          </ErrorBoundary>
+        ),
+      },
+      {
+        path: "catalogo",
+        element: (
+          <ErrorBoundary context="Arcana Catalog">
+            <ArcanaCatalogView />
           </ErrorBoundary>
         ),
       },

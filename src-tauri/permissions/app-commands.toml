@@ -2,6 +2,11 @@
 identifier = "allow-app-commands"
 description = "Grants the app's own IPC commands to the main window — both the local origin (dev / Windows tauri.localhost) and the http://localhost asset-server remote origin used on macOS/Linux. Keep in sync with the generate_handler! list in lib.rs: a command missing here fails on every origin once this manifest exists."
 commands.allow = [
+  "arcana_import_scryfall",
+  "arcana_catalog_stats",
+  "arcana_catalog_search",
+  "arcana_catalog_lookup",
+  "arcana_catalog_printings",
   "is_card_supported",
   "card_roles",
   "forge_room_available",
@@ -16,6 +21,7 @@ commands.allow = [
   "stop_local_relay",
   "discover_lan_rooms",
   "card_art_route_available",
+  "read_cached_card_art",
   "preseed_card_art",
   "download_all_card_art",
   "cancel_card_art_download",

@@ -8,8 +8,12 @@
   },
   "bundle": {
     "resources": {
-      "../forge-harness/native/build/libforgeharness.dylib": null,
-      "../forge-harness/native/build/forgeharness.dll": null
-    }
-  }
+      "../forge-harness/native/build/forgeharness.dll": "forgeharness.dll"
+    },
+    "targets": [
+      "nsis",
+      "msi"
+    ]
+  },
+  "version": "3.69.1"
 }
