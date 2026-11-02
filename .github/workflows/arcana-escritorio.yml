@@ -5,7 +5,12 @@ on:
     branches:
       - arcana/solo-escritorio
       - arcana/importador-scryfall-v1
+      - arcana/imagenes-offline-windows-v1
   workflow_dispatch:
+
+concurrency:
+  group: arcana-windows-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read

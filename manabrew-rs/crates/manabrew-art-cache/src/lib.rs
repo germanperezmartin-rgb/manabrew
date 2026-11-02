@@ -170,6 +170,39 @@ impl ImageCache {
         }
     }
 
+    /// Unlike pin(), this persists many entries at once. Rewriting a 10 MB
+    /// pinned.json for each of 120k printings would make a complete offline
+    /// art library prohibitively slow (quadratic disk traffic).
+    pub fn pin_many(&self, keys: &[String]) {
+        let mut newly_pinned_bytes = 0u64;
+        let mut newly_pinned_count = 0u64;
+        let Ok(mut pinned) = self.pinned.lock() else {
+            return;
+        };
+        for key in keys {
+            let Some(path) = self.path_for(key) else {
+                continue;
+            };
+            let Ok(meta) = std::fs::metadata(&path) else {
+                continue;
+            };
+            if pinned.insert(key.clone()) {
+                newly_pinned_count += 1;
+                newly_pinned_bytes += meta.len();
+            }
+        }
+        if newly_pinned_count == 0 {
+            return;
+        }
+        // Write one manifest per batch, and keep the old code for single cards.
+        save_pinned(&self.root.join(PINNED_FILE), &pinned);
+        drop(pinned);
+        if let Ok(mut totals) = self.totals.lock() {
+            totals.pinned_files += newly_pinned_count;
+            totals.pinned_bytes += newly_pinned_bytes;
+        }
+    }
+
     fn is_pinned(&self, key: &str) -> bool {
         self.pinned
             .lock()
@@ -753,6 +786,87 @@ impl ImageCache {
     }
 }
 
+/// Download only the selected Scryfall printing URLs from the user's
+/// imported local catalog, not Scryfall's one-printing-per-oracle bulk file.
+/// The caller can stop after every bounded batch; starting again skips files
+/// already on disk. Progress counts individual CDN assets, including card faces.
+#[derive(Clone, Debug, Default, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PrintingArtProgress {
+    pub total: u64,
+    pub done: u64,
+    pub downloaded: u64,
+    pub already_cached: u64,
+    pub failed: u64,
+    pub bytes: u64,
+    pub cancelled: bool,
+}
+
+impl ImageCache {
+    pub async fn download_printing_art(
+        &self,
+        keys: Vec<String>,
+        should_cancel: impl Fn() -> bool,
+        progress: impl Fn(PrintingArtProgress),
+    ) -> Result<PrintingArtProgress, String> {
+        use futures_util::stream::{self, StreamExt};
+
+        let total = keys.len() as u64;
+        let mut status = PrintingArtProgress {
+            total,
+            ..Default::default()
+        };
+        progress(status.clone());
+        for chunk in keys.chunks(128) {
+            if should_cancel() {
+                status.cancelled = true;
+                break;
+            }
+            if chunk.iter().any(|key| !self.contains(key)) {
+                // Keep 2 GiB for Windows and other applications. A failed
+                // disk check preserves the completed batches for a later retry.
+                self.check_room_for(2 * 1024 * 1024 * 1024)?;
+            }
+            // At most four image CDN downloads at a time, with bounded RAM.
+            let responses = stream::iter(chunk.iter().cloned())
+                .map(|key| async move {
+                    let response = if self.contains(&key) {
+                        None
+                    } else {
+                        Some(self.fetch(&key).await)
+                    };
+                    (key, response)
+                })
+                .buffer_unordered(4)
+                .collect::<Vec<_>>()
+                .await;
+            let mut to_pin = Vec::with_capacity(chunk.len());
+            for (key, response) in responses {
+                match response {
+                    None => {
+                        status.already_cached += 1;
+                        to_pin.push(key);
+                    }
+                    Some(Ok(body)) => match self.store(&key, &body, false) {
+                        Ok(()) => {
+                            status.downloaded += 1;
+                            status.bytes += body.len() as u64;
+                            to_pin.push(key);
+                        }
+                        Err(_) => status.failed += 1,
+                    },
+                    Some(Err(_)) => status.failed += 1,
+                }
+                status.done += 1;
+            }
+            self.pin_many(&to_pin);
+            progress(status.clone());
+        }
+        progress(status.clone());
+        Ok(status)
+    }
+}
+
 /// Stops a running [`ImageCache::download_all`].
 pub fn cancel_download() {
     CANCEL_BULK.store(true, Ordering::Relaxed);
@@ -766,6 +880,40 @@ mod tests {
     fn cache() -> (ImageCache, tempfile::TempDir) {
         let dir = tempfile::tempdir().unwrap();
         (ImageCache::new(dir.path().to_path_buf()), dir)
+    }
+
+    #[test]
+    fn pin_many_persists_in_one_batch_for_a_restarted_app() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let keys = vec![
+            "normal/front/a/one.jpg".to_string(),
+            "normal/front/a/two.jpg".to_string(),
+        ];
+        {
+            let cache = ImageCache::new(dir.path().to_path_buf());
+            for key in &keys {
+                cache.store(key, b"picture", false).expect("cached image");
+            }
+            cache.pin_many(&keys);
+            assert_eq!(cache.stats().pinned_files, 2);
+        }
+        let reopened = ImageCache::new(dir.path().to_path_buf());
+        assert!(keys.iter().all(|key| reopened.is_pinned(key)));
+    }
+
+    #[tokio::test]
+    async fn repeating_an_art_download_skips_images_already_on_disk() {
+        let (cache, _root) = cache();
+        let key = "normal/front/a/already.jpg".to_string();
+        cache.store(&key, b"art", false).expect("cached");
+        let progress = cache
+            .download_printing_art(vec![key.clone()], || false, |_| {})
+            .await
+            .expect("offline download");
+        assert_eq!(progress.total, 1);
+        assert_eq!(progress.already_cached, 1);
+        assert_eq!(progress.downloaded, 0);
+        assert_eq!(cache.stats().pinned_files, 1);
     }
 
     #[test]

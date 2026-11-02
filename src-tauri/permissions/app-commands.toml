@@ -2,6 +2,10 @@
 identifier = "allow-app-commands"
 description = "Grants the app's own IPC commands to the main window — both the local origin (dev / Windows tauri.localhost) and the http://localhost asset-server remote origin used on macOS/Linux. Keep in sync with the generate_handler! list in lib.rs: a command missing here fails on every origin once this manifest exists."
 commands.allow = [
+  "arcana_art_download",
+  "arcana_art_status",
+  "arcana_art_cancel",
+  "arcana_art_open_folder",
   "arcana_import_scryfall",
   "arcana_catalog_stats",
   "arcana_catalog_search",
