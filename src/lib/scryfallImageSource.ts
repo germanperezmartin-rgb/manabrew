@@ -81,6 +81,28 @@ async function fetchImageBytes(url: string): Promise<Blob> {
   const installed = await cachedCardGlintAsset(url).catch(() => undefined);
   if (installed) return installed.blob();
   const key = cacheKeyForImage(url);
+  // Windows has no local HTTP art route. Check the native on-disk library
+  // BEFORE LAN and CDN so disconnecting Wi-Fi never hides a saved picture.
+  if (key && getPlatformType() === "tauri") {
+    const candidates = [url];
+    if (key.startsWith("large/")) {
+      // A compact library stores normal art but may skip large previews.
+      // Show that saved normal image rather than a blank enlarged card.
+      candidates.push(`https://cards.scryfall.io/normal/${key.slice("large/".length)}`);
+    }
+    for (const candidate of candidates) {
+      try {
+        const saved = await getPlatform().invoke<number[] | null>("read_cached_card_art", {
+          url: candidate,
+        });
+        if (saved?.length) {
+          return new Blob([new Uint8Array(saved)], { type: imageMimeFromUrl(candidate) });
+        }
+      } catch {
+        // If the image is not saved, try LAN and online sources below.
+      }
+    }
+  }
   if (key) {
     const local = (await localCardArtRouteAvailable()) ? `/scryfall-img/${key}` : null;
     for (const candidate of [local, lanArtUrl(key)]) {
@@ -91,16 +113,6 @@ async function fetchImageBytes(url: string): Promise<Blob> {
       } catch {
         // Offline, or no such host: the next source gets a turn.
       }
-    }
-  }
-  // Windows has no /scryfall-img/ HTTP endpoint. Read downloaded pictures
-  // directly from the desktop's protected on-disk cache via IPC.
-  if (key && getPlatformType() === "tauri") {
-    try {
-      const saved = await getPlatform().invoke<number[] | null>("read_cached_card_art", { url });
-      if (saved?.length) return new Blob([new Uint8Array(saved)], { type: imageMimeFromUrl(url) });
-    } catch {
-      // A missing file can still be downloaded through the normal CDN fallback.
     }
   }
   // cache: "reload" bypasses any non-CORS entry the display <img> cached for
