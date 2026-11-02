@@ -1,0 +1,78 @@
+name: Arcana Arena - Verificar antivirus Windows
+
+on:
+  push:
+    branches:
+      - arcana/analisis-defender-windows
+    paths:
+      - .github/workflows/arcana-antivirus.yml
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  scan:
+    name: Analizar instaladores con Microsoft Defender
+    runs-on: windows-latest
+    timeout-minutes: 25
+    steps:
+      - name: Descargar los instaladores originales de GitHub Actions
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 41428821320
+          name: arcana-windows-instalador-sin-firma
+          path: installers
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Verificar origen y huellas
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $files = @(Get-ChildItem installers -File -Recurse)
+          if ($files.Count -lt 2) { throw 'No se descargaron los dos instaladores de Windows' }
+          foreach ($file in $files) {
+            $hash = (Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash
+            Write-Host ("Archivo: {0} | SHA256: {1} | Bytes: {2}" -f $file.Name,$hash,$file.Length)
+          }
+          $nsis = $files | Where-Object { $_.Name -like '*setup.exe' } | Select-Object -First 1
+          if (-not $nsis) { throw 'Falta el instalador NSIS' }
+          $expected = '807499D715C942DE2F76890E71A72DB70A4F01350EAA71164C7A89F1C38263EE'
+          if ((Get-FileHash $nsis.FullName -Algorithm SHA256).Hash -ne $expected) {
+            throw 'El instalador no coincide con el archivo que se entrego al usuario'
+          }
+          Write-Host 'La huella coincide con el instalador entregado.'
+      - name: Verificar que Microsoft Defender realmente funciona
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $status = Get-MpComputerStatus -ErrorAction Stop
+          Write-Host ("AMServiceEnabled: {0}; AntivirusEnabled: {1}; AMRunningMode: {2}" -f $status.AMServiceEnabled,$status.AntivirusEnabled,$status.AMRunningMode)
+          Write-Host ("Firma antivirus: {0} | ultima actualizacion: {1}" -f $status.AntivirusSignatureVersion,$status.AntivirusSignatureLastUpdated)
+          if (-not $status.AMServiceEnabled -or -not $status.AntivirusEnabled) {
+            throw 'Microsoft Defender NO esta activo en este entorno. No se puede certificar una exploracion antivirus.'
+          }
+          Update-MpSignature -ErrorAction Stop
+      - name: Analizar instaladores y contenidos sin ejecutarlos
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $files = @(Get-ChildItem installers -File -Recurse)
+          foreach ($file in $files) {
+            Write-Host ("Examinando {0}" -f $file.Name)
+            Start-MpScan -ScanType CustomScan -ScanPath $file.FullName -ErrorAction Stop
+          }
+          $nsis = $files | Where-Object { $_.Name -like '*setup.exe' } | Select-Object -First 1
+          $unpacked = Join-Path $env:RUNNER_TEMP 'arcana-antivirus-unpacked'
+          New-Item -ItemType Directory -Path $unpacked -Force | Out-Null
+          & 7z x "-o$unpacked" -y "$($nsis.FullName)" | Out-Null
+          if ($LASTEXITCODE -ne 0) { throw 'No se pudieron extraer los archivos internos para analizarlos' }
+          Write-Host 'Examinando archivos extraidos'
+          Start-MpScan -ScanType CustomScan -ScanPath $unpacked -ErrorAction Stop
+          $detections = @(Get-MpThreatDetection -ErrorAction Stop)
+          if ($detections.Count -gt 0) {
+            foreach ($detection in $detections) {
+              Write-Host ("DETECCION: {0} | recursos: {1}" -f $detection.ThreatName,($detection.Resources -join ', '))
+            }
+            throw 'Defender ha notificado una deteccion. No distribuir este instalador.'
+          }
+          Write-Host 'Microsoft Defender no ha notificado ninguna deteccion en esta maquina.'
