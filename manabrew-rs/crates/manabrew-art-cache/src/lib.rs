@@ -814,7 +814,7 @@ impl ImageCache {
         let total = keys.len() as u64;
         let mut status = PrintingArtProgress { total, ..Default::default() };
         progress(status.clone());
-        for chunk in keys.chunks(32) {
+        for chunk in keys.chunks(128) {
             if should_cancel() {
                 status.cancelled = true;
                 break;
