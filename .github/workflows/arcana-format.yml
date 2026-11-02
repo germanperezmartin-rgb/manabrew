@@ -1,9 +1,10 @@
-name: Arcana Arena - Formato del importador de escritorio
+name: Arcana Arena - Formato de la biblioteca offline
 
 on:
   push:
     branches:
       - arcana/importador-scryfall-v1
+      - arcana/imagenes-offline-windows-v1
     paths:
       - .github/workflows/arcana-format.yml
 
@@ -34,14 +35,14 @@ jobs:
       - name: Formatear Arcana
         run: |
           cargo fmt --all
-          yarn prettier --write src/views/ArcanaCatalogView.tsx src/views/ArcanaSimpleHome.tsx src/lib/arcanaCatalog.ts src/lib/localCardRecords.ts src/api/scryfall.ts src/api/scryfallBatch.ts src/components/layout/TopBar.tsx src/components/layout/navDestinations.ts src/router.tsx src/views/Play.tsx
+          yarn prettier --write src/views/ArcanaCatalogView.tsx src/views/ArcanaSimpleHome.tsx src/lib/arcanaCatalog.ts src/lib/arcanaArt.ts src/components/arcana/ArcanaArtLibrary.tsx src/lib/localCardRecords.ts src/api/scryfall.ts src/api/scryfallBatch.ts src/components/layout/TopBar.tsx src/components/layout/navDestinations.ts src/router.tsx src/views/Play.tsx
       - name: Guardar el formato en la rama
         shell: bash
         run: |
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config user.name "github-actions[bot]"
-          git add src-tauri src/views src/lib src/api src/components src/router.tsx
+          git add src-tauri manabrew-rs/crates/manabrew-art-cache src/views src/lib src/api src/components src/router.tsx
           if ! git diff --cached --quiet; then
             git commit -m "style(arcana): format native importer and simplified desktop UI"
-            git push origin HEAD:arcana/importador-scryfall-v1
+            git push origin HEAD:arcana/imagenes-offline-windows-v1
           fi
