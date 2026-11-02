@@ -16,6 +16,7 @@ import {
   Swords,
 } from "lucide-react";
 import { ScryfallImg } from "@/components/ScryfallImg";
+import { ArcanaArtLibrary } from "@/components/arcana/ArcanaArtLibrary";
 import {
   arcanaCatalogPrintings,
   arcanaCatalogSearch,
@@ -335,6 +336,8 @@ export default function ArcanaCatalogView() {
             <Check className="h-4 w-4" /> Base de datos local
           </span>
         </div>
+
+        {stats && stats.printings > 0 && <ArcanaArtLibrary printings={stats.printings} />}
 
         {!stats?.printings ? (
           <div
