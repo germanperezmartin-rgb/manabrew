@@ -5,6 +5,7 @@ on:
     branches:
       - arcana/solo-escritorio
       - arcana/importador-scryfall-v1
+      - arcana/imagenes-offline-windows-v1
   workflow_dispatch:
 
 permissions:
