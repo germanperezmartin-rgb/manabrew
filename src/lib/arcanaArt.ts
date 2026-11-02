@@ -47,7 +47,6 @@ export function arcanaArtOpenFolder(): Promise<void> {
 }
 
 export function arcanaArtEstimateGiB(printings: number, quality: ArcanaArtQuality): number {
-  const typicalKb =
-    quality === "normal" ? 113 : quality === "play" ? 291 : 541;
+  const typicalKb = quality === "normal" ? 113 : quality === "play" ? 291 : 541;
   return Math.ceil((printings * typicalKb) / (1024 * 1024));
 }

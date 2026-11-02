@@ -1,7 +1,7 @@
 #![allow(clippy::too_many_arguments)]
 
-mod arcana_catalog;
 mod arcana_art;
+mod arcana_catalog;
 mod asset_server;
 mod card_db;
 mod commands;

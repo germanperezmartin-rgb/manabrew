@@ -812,7 +812,10 @@ impl ImageCache {
         use futures_util::stream::{self, StreamExt};
 
         let total = keys.len() as u64;
-        let mut status = PrintingArtProgress { total, ..Default::default() };
+        let mut status = PrintingArtProgress {
+            total,
+            ..Default::default()
+        };
         progress(status.clone());
         for chunk in keys.chunks(128) {
             if should_cancel() {
@@ -844,16 +847,14 @@ impl ImageCache {
                         status.already_cached += 1;
                         to_pin.push(key);
                     }
-                    Some(Ok(body)) => {
-                        match self.store(&key, &body, false) {
-                            Ok(()) => {
-                                status.downloaded += 1;
-                                status.bytes += body.len() as u64;
-                                to_pin.push(key);
-                            }
-                            Err(_) => status.failed += 1,
+                    Some(Ok(body)) => match self.store(&key, &body, false) {
+                        Ok(()) => {
+                            status.downloaded += 1;
+                            status.bytes += body.len() as u64;
+                            to_pin.push(key);
                         }
-                    }
+                        Err(_) => status.failed += 1,
+                    },
                     Some(Err(_)) => status.failed += 1,
                 }
                 status.done += 1;

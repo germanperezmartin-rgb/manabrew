@@ -39,7 +39,10 @@ fn state() -> &'static Mutex<ArtLibraryStatus> {
 }
 
 fn snapshot() -> ArtLibraryStatus {
-    state().lock().map(|value| value.clone()).unwrap_or_default()
+    state()
+        .lock()
+        .map(|value| value.clone())
+        .unwrap_or_default()
 }
 
 fn publish(app: &tauri::AppHandle, update: impl FnOnce(&mut ArtLibraryStatus)) {
@@ -53,10 +56,7 @@ fn publish(app: &tauri::AppHandle, update: impl FnOnce(&mut ArtLibraryStatus)) {
     let _ = app.emit("arcana:art-progress", latest);
 }
 
-fn read_art_keys(
-    database: &Connection,
-    variants: &[String],
-) -> Result<Vec<String>, String> {
+fn read_art_keys(database: &Connection, variants: &[String]) -> Result<Vec<String>, String> {
     let mut keys = HashSet::new();
     let mut query = database
         .prepare("SELECT record_json FROM printings")
@@ -90,11 +90,17 @@ fn read_art_keys(
     // be available, even before special battlefield crops and large previews.
     ordered.sort_unstable_by(|a, b| {
         let priority = |key: &str| {
-            if key.starts_with("normal/") { 0 }
-            else if key.starts_with("border_crop/") { 1 }
-            else if key.starts_with("art_crop/") { 2 }
-            else if key.starts_with("large/") { 3 }
-            else { 4 }
+            if key.starts_with("normal/") {
+                0
+            } else if key.starts_with("border_crop/") {
+                1
+            } else if key.starts_with("art_crop/") {
+                2
+            } else if key.starts_with("large/") {
+                3
+            } else {
+                4
+            }
         };
         priority(a).cmp(&priority(b)).then_with(|| a.cmp(b))
     });
@@ -107,7 +113,10 @@ fn include_uris(uris: &Value, variants: &[String], keys: &mut HashSet<String>) {
             if let Some(key) = key_from_url(url) {
                 // Reject malformed keys at this boundary as well. The image
                 // cache independently rejects traversal and invalid NTFS paths.
-                if !key.split('/').any(|part| part.is_empty() || part == "." || part == "..") {
+                if !key
+                    .split('/')
+                    .any(|part| part.is_empty() || part == "." || part == "..")
+                {
                     keys.insert(key);
                 }
             }
@@ -172,18 +181,18 @@ pub async fn arcana_art_download(
             if !path.is_file() {
                 return Err("Primero importa tu archivo Scryfall en «Colección».".to_string());
             }
-            let database = Connection::open_with_flags(
-                path,
-                rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY,
-            )
-            .map_err(|error| error.to_string())?;
+            let database =
+                Connection::open_with_flags(path, rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY)
+                    .map_err(|error| error.to_string())?;
             read_art_keys(&database, &scan_variants)
         })
         .await
         .map_err(|error| error.to_string())??;
 
         if keys.is_empty() {
-            return Err("El catálogo importado no contiene enlaces de imágenes válidos.".to_owned());
+            return Err(
+                "El catálogo importado no contiene enlaces de imágenes válidos.".to_owned(),
+            );
         }
         publish(&app, |state| {
             state.total = keys.len() as u64;
@@ -219,7 +228,8 @@ pub async fn arcana_art_download(
                 state.phase = if progress.cancelled {
                     "Descarga detenida; puedes continuar otro día.".to_string()
                 } else if progress.failed > 0 {
-                    "Descarga parcial; vuelve a pulsar para reintentar las imágenes pendientes.".to_string()
+                    "Descarga parcial; vuelve a pulsar para reintentar las imágenes pendientes."
+                        .to_string()
                 } else {
                     "Biblioteca completa para las calidades seleccionadas.".to_string()
                 };
@@ -230,7 +240,8 @@ pub async fn arcana_art_download(
             publish(&app, |state| {
                 state.running = false;
                 state.error = Some(error.clone());
-                state.phase = "Descarga interrumpida. Las imágenes terminadas están guardadas.".into();
+                state.phase =
+                    "Descarga interrumpida. Las imágenes terminadas están guardadas.".into();
             });
             Err(error)
         }
@@ -265,7 +276,8 @@ mod tests {
     #[test]
     fn keeps_each_printing_and_both_faces_without_duplicate_downloads() {
         let db = Connection::open_in_memory().unwrap();
-        db.execute_batch("CREATE TABLE printings (record_json TEXT NOT NULL)").unwrap();
+        db.execute_batch("CREATE TABLE printings (record_json TEXT NOT NULL)")
+            .unwrap();
         let cards = [
             serde_json::json!({
                 "name": "Forest", "image_uris": {
@@ -287,7 +299,8 @@ mod tests {
             }),
         ];
         for record in cards.iter().chain(cards.iter()) {
-            db.execute("INSERT INTO printings VALUES (?1)", [record.to_string()]).unwrap();
+            db.execute("INSERT INTO printings VALUES (?1)", [record.to_string()])
+                .unwrap();
         }
         let keys = read_art_keys(&db, &["normal".to_string()]).unwrap();
         assert_eq!(keys.len(), 4);

@@ -244,7 +244,9 @@ export default function ArcanaCatalogView() {
         imageUrl: artwork(selected),
       });
     }
-    setMessage(`Añadida una copia de ${selected.name} (${selected.set.toUpperCase()} #${selected.collector_number}) a «${saved.deck.name}».`);
+    setMessage(
+      `Añadida una copia de ${selected.name} (${selected.set.toUpperCase()} #${selected.collector_number}) a «${saved.deck.name}».`,
+    );
   }
 
   const totalPages = results ? Math.max(1, Math.ceil(results.total / results.pageSize)) : 1;
@@ -481,7 +483,10 @@ export default function ArcanaCatalogView() {
                     · {selected.lang?.toUpperCase()}
                   </p>
                   <div className="space-y-2 rounded-lg border border-[#50647c] bg-[#0b1726] p-3">
-                    <label htmlFor="arcana-target-deck" className="block text-xs font-semibold text-amber-100">
+                    <label
+                      htmlFor="arcana-target-deck"
+                      className="block text-xs font-semibold text-amber-100"
+                    >
                       Añadir esta edición a un mazo
                     </label>
                     <select
@@ -492,7 +497,9 @@ export default function ArcanaCatalogView() {
                     >
                       <option value="">Selecciona tu mazo…</option>
                       {savedDecks.map((saved) => (
-                        <option key={saved.id} value={saved.id}>{saved.deck.name}</option>
+                        <option key={saved.id} value={saved.id}>
+                          {saved.deck.name}
+                        </option>
                       ))}
                     </select>
                     <button
