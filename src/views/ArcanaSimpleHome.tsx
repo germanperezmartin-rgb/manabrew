@@ -1,4 +1,9 @@
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { Download, LoaderCircle } from "lucide-react";
+import { useOwnedDecks } from "@/hooks/useOwnedDecks";
+import { usePreferencesStore } from "@/stores/usePreferencesStore";
+import { deckArtUrls, preseedCardArt, variantsForStyles } from "@/api/cardArtCache";
 import { useNavigate } from "react-router-dom";
 import { ArrowUpRight, BookOpen, Database, Layers3, Swords, Users } from "lucide-react";
 import { arcanaCatalogStats, type ArcanaCatalogStats } from "@/lib/arcanaCatalog";
@@ -35,6 +40,29 @@ function Feature({
 
 export default function ArcanaSimpleHome() {
   const navigate = useNavigate();
+  const decks = useOwnedDecks();
+  const style = usePreferencesStore((store) => store.battlefieldCardStyle);
+  const [downloadingArt, setDownloadingArt] = useState(false);
+  const [artStatus, setArtStatus] = useState("");
+  async function downloadArt() {
+    if (downloadingArt) return;
+    const urls = [...new Set(decks.flatMap((saved) => deckArtUrls(saved.deck, variantsForStyles([style]))))];
+    if (!urls.length) {
+      toast.info("Guarda al menos un mazo para descargar sus imágenes.");
+      return;
+    }
+    setDownloadingArt(true);
+    setArtStatus(`Descargando ${urls.length} imágenes de tus mazos…`);
+    try {
+      const result = await preseedCardArt(urls);
+      setArtStatus(`${result.fetched + result.alreadyCached} imágenes disponibles · ${result.failed} fallidas.`);
+      toast.success("Descarga terminada. Desconecta Internet y comprueba las cartas.");
+    } catch (error) {
+      setArtStatus(`Error al descargar: ${String(error)}`);
+    } finally {
+      setDownloadingArt(false);
+    }
+  }
   const [catalog, setCatalog] = useState<ArcanaCatalogStats | null>(null);
   useEffect(() => {
     let mounted = true;
@@ -149,6 +177,20 @@ export default function ArcanaSimpleHome() {
           />
         </div>
 
+        <div className="rounded-xl border border-amber-500/50 bg-[#1e2b3d] p-5">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <h3 className="font-serif text-xl text-[#f8f0e1]">Imágenes para jugar sin Internet</h3>
+              <p className="mt-1 text-sm text-slate-300">Con Internet, descarga las ilustraciones de tus mazos una sola vez.</p>
+              {artStatus && <p role="status" className="mt-2 text-sm text-amber-200">{artStatus}</p>}
+            </div>
+            <button type="button" onClick={() => void downloadArt()} disabled={downloadingArt}
+              className="flex items-center gap-2 rounded-lg bg-[#e5ba74] px-5 py-3 font-bold text-slate-950 disabled:opacity-60">
+              {downloadingArt ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+              {downloadingArt ? "Descargando…" : "Descargar imágenes de mis mazos"}
+            </button>
+          </div>
+        </div>
         <div className="flex flex-wrap items-center justify-between gap-5 rounded-xl border border-[#4a6d6a] bg-[#132d34] p-6">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.28em]" style={{ color: GOLD }}>
