@@ -206,7 +206,7 @@ fn import_database(
                     ])
                     .map_err(|err| format!("No se pudo guardar la línea {processed}: {err}"))?;
                 imported += 1;
-                if processed % 1_500 == 0 {
+                if processed.is_multiple_of(1_500) {
                     progress(ImportProgress {
                         processed,
                         imported,
