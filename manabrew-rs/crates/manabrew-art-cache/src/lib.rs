@@ -823,9 +823,9 @@ impl ImageCache {
                 break;
             }
             if chunk.iter().any(|key| !self.contains(key)) {
-                // Keep at least 128 MB free. A failed disk check stops cleanly;
-                // the images downloaded in previous batches remain usable.
-                self.check_room_for(128 * 1024 * 1024)?;
+                // Keep 2 GiB for Windows and other applications. A failed
+                // disk check preserves the completed batches for a later retry.
+                self.check_room_for(2 * 1024 * 1024 * 1024)?;
             }
             // At most four image CDN downloads at a time, with bounded RAM.
             let responses = stream::iter(chunk.iter().cloned())
