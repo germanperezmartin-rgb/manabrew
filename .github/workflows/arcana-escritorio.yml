@@ -8,6 +8,10 @@ on:
       - arcana/imagenes-offline-windows-v1
   workflow_dispatch:
 
+concurrency:
+  group: arcana-windows-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
